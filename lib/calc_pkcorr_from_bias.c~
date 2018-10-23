@@ -40,7 +40,7 @@ histo_t calc_integ_pkcorr_bias(FLAG a,size_t iq, kernel_bias kernel, _Bool run_h
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
 	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
 	if (run_half) {
-		if (x>=0.5) mumax = 0.5/x; //symmetric q <-> k-q, shorter and avoids oscillations
+		if (x>=0.5) mumax = 0.5/x; //symmetric q <-> k-q, and avoids oscillations
 	}
 	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);
 	//nodes_weights_gauss_legendre(mumin,mumax,gauss_legendre_mu.mu,gauss_legendre_mu.w,gauss_legendre_mu.nmu);

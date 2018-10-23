@@ -3,29 +3,53 @@
 import os
 import ctypes
 import scipy
+import functools
 from numpy import ctypeslib
-
-def transfer_nowiggle(k,z=0.,h=0.7,Omegab0=0.05,Omegam0=0.3,Tcmb0=2.7):
+"""
+def transfer_nowiggle(k,h=0.676,omega_b=0.022,omega_m=0.21,T_cmb=2.7255,Omega_m=None,Omega_b=None,**kwargs):
 	#Fitting formula for no-wiggle P(k) (Eq.[29] of Eisenstein and Hu 1998)
-	omegab0 = Omegab0 * h ** 2
-	omegam0 = Omegam0 * h ** 2
-	theta_cmb = cosmo.Tcmb0 / 2.7
-	sound_horizon = 44.5 * h * scipy.log(9.83/omegam0) / scipy.sqrt(1. + 10.*omegab0**0.75)
-	alpha_gamma = 1. - 0.328 * scipy.log(431.*omegam0) * frac_baryon + 0.38 * scipy.log(22.3*omegam0) * frac_baryon**2
-	k_eq = 0.0746 * omegam0 * theta_cmb ** (-2)
+	if Omega_m is not None: omega_m = Omega_m * h**2
+	if Omega_b is not None: omega_b = Omega_b * h**2
+	frac_baryon  = omega_b / omega_m
+	theta_cmb = T_cmb / 2.7
+	sound_horizon = 44.5 * h * scipy.log(9.83/omega_m) / scipy.sqrt(1. + 10.*omega_b**0.75)
+	alpha_gamma = 1. - 0.328 * scipy.log(431.*omega_m) * frac_baryon + 0.38 * scipy.log(22.3*omega_m) * frac_baryon**2
+	k_eq = 0.0746 * omega_m * theta_cmb ** (-2)
 	k = k * h
 	ks = k * sound_horizon / h
 	q = k / (13.41*k_eq)
-	gamma_eff = omegam0 * (alpha_gamma + (1 - alpha_gamma) / (1 + (0.43*ks) ** 4))
-	q_eff = q * omegam0 / gamma_eff
+	gamma_eff = omega_m * (alpha_gamma + (1 - alpha_gamma) / (1 + (0.43*ks) ** 4))
+	q_eff = q * omega_m / gamma_eff
 	L0 = scipy.log(2*scipy.e + 1.8 * q_eff)
 	C0 = 14.2 + 731.0 / (1 + 62.5 * q_eff)
 	return L0 / (L0 + C0 * q_eff**2)
+"""
+def transfer_nowiggle(k,h=0.676,omega_b=0.022,omega_m=0.21,T_cmb=2.7255,Omega_m=None,Omega_b=None,**kwargs):
+	#Fitting formula for no-wiggle P(k) (Eq.[29] of Eisenstein and Hu 1998)
+	if Omega_m is not None: omega_m = Omega_m * h**2
+	if Omega_b is not None: omega_b = Omega_b * h**2
+	frac_baryon  = omega_b / omega_m
+	theta_cmb = T_cmb / 2.7
+	sound_horizon = 44.5 * h * scipy.log(9.83/omega_m) / scipy.sqrt(1. + 10.*omega_b**0.75)
+	alpha_gamma = 1. - 0.328 * scipy.log(431.*omega_m) * frac_baryon + 0.38 * scipy.log(22.3*omega_m) * frac_baryon**2
+	ks = k * sound_horizon
+	gamma_eff = omega_m / h * (alpha_gamma + (1 - alpha_gamma) / (1 + (0.43*ks) ** 4))
+	q = k * theta_cmb**2 / gamma_eff
+	L0 = scipy.log(2*scipy.e + 1.8 * q)
+	C0 = 14.2 + 731.0 / (1 + 62.5 * q)
+	return L0 / (L0 + C0 * q**2)
 
-def pk_nowiggle(k,pk,ns=1.,**kwargs):
-	pknowiggle = k**ns*transfer_nowiggle(k,**kwargs)
+def Pnowiggle(k,pk,n_s=1.,**kwargs):
+	pknowiggle = k**n_s*transfer_nowiggle(k,**kwargs)**2
 	return pknowiggle*pk[0]/pknowiggle[0]
-	
+
+def scale_factor(npk=1):
+	def _decorate(func):
+		@functools.wraps(func)				
+		def wrapper(self,Dgrowth=1.,*args,**kwargs):
+			return Dgrowth**(2*npk)*func(self,*args,**kwargs)
+		return wrapper
+	return _decorate
 
 class Terms(object):
 	
@@ -43,7 +67,7 @@ class Terms(object):
 		return self.columns.keys()
 		
 	def __len__(self):
-		return len(self[self.fields[0]])
+		return len(self['k'])
 
 	@property
 	def size(self):
@@ -88,25 +112,137 @@ class Terms(object):
 	def as_dict(self,fields=None):
 		if fields is None: fields = self.fields
 		return {field:self[field] for field in fields}
+	
+	def copy(self):
+		new = self.__class__()
+		new.__dict__.update(self.__dict__)
+		return new
+		
+	def deepcopy(self):
+		import copy
+		new = self.__class__()
+		new.__dict__.update(copy.deepcopy(self.__dict__))
+		for key in new.fields: new.columns[key] = self.columns[key].copy()
+		return new
+	
+	def pad_k(self,k,mode='constant',constant_values=0.,**kwargs):
+		pad_start = scipy.sum(k<self.k[0])
+		pad_end = scipy.sum(k>self.k[-1])
+		for key in self.FIELDS:
+			pad_width = (0,0)*(self[key].ndim-1) + (pad_start,pad_end)
+			self[key] = scipy.pad(self[key],pad_width=pad_width,mode=mode,constant_values=constant_values)
+		self.k[:pad_start] = k[:pad_start]
+		self.k[-pad_end:] = k[-pad_end:]
+		for key in kwargs:
+			self[key][:pad_start] = kwargs[key][:pad_start]
+			self[key][-pad_end:] = kwargs[key][-pad_end:]
+	
+	def nan_to_zero(self):
+		for key in self.FIELDS: self[key][scipy.isnan(self[key])] = 0.
+
+class TermsPkLin(Terms):
+
+	FIELDS = ['k','pk_lin']
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+
+
+class Terms2Loop(Terms):
+
+	FIELDS = ['k','pk_lin','sigma_v2','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree']
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+	
+	def P2loop(self,Dgrowth=1.):
+		#Dgrowth is Dgrowth or sigma8...
+		#Taruya 2012 (arXiv 1208.1191v1) eq 24
+		factor = 0.5 * (self['k']*Dgrowth)**2 * self['sigma_v2']
+		G1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1a_1loop']*(1. + factor) + Dgrowth**4*self['G1a_2loop'])
+		G1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1b_1loop']*(1. + factor) + Dgrowth**4*self['G1b_2loop'])
+		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
+		pkcorr_G1 = G1a_reg * G1b_reg * self['pk_lin']
+		#Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
+		pkcorr_G2 = Dgrowth**4 * scipy.exp(-2. * factor) * (self['pkcorr_G2_tree_tree'] * (1. + factor)**2 + self['pkcorr_G2_tree_1loop'] * Dgrowth**2 * (1. + factor) + self['pkcorr_G2_1loop_1loop'] * Dgrowth**4)
+		#Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
+		pkcorr_G3 = Dgrowth**6 * scipy.exp(-2. * factor) * self['pkcorr_G3_tree']
+		return pkcorr_G1 + pkcorr_G2 + pkcorr_G3
+
+class TermsBias(Terms):
+	
+	FIELDS = ['k','pk_lin','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+		
+	@scale_factor(2)
+	def Pb2d(self):
+		return self['pkbias_b2d']
+	
+	@scale_factor(2)
+	def Pbs2d(self):
+		return self['pkbias_bs2d']
+
+	@scale_factor(2)
+	def Pb2t(self):
+		return self['pkbias_b2t']
+	
+	@scale_factor(2)
+	def Pbs2t(self):
+		return self['pkbias_bs2t']
+	
+	@scale_factor(2)
+	def Pb22(self):
+		return self['pkbias_b22']
+
+	@scale_factor(2)
+	def Pb2s2(self):
+		return self['pkbias_b2s2']
+
+	@scale_factor(2)
+	def Pbs22(self):
+		return self['pkbias_bs22']
+	
+	@scale_factor(2)
+	def Psigma3sq(self):
+		return self['pk_lin']*self['sigma3sq']
+
+class TermsAB(Terms):
+	
+	FIELDS = ['k','pk_lin','A','B']
+	SHAPE = {'A':(3,3),'B':(4,3)}
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+	
+	@scale_factor(2)
+	def PA(self):
+		return self['A']
+	
+	@scale_factor(2)
+	def PB(self):
+		return self['B']
+
 
 class PyRegPT(object):
 
 	C_TYPE = ctypes.c_double
 	PATH_CUBA = os.path.join(os.getenv('CUBA'),'libcuba.so')
 	PATH_REGPT = os.path.join(os.path.dirname(os.path.realpath(__file__)),'regpt.so')
-	KEYS_PK_LIN = ['k','pk_lin']
-	KEYS_2LOOP = ['k','pk_lin','sigma_v2','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree']
-	KEYS_BIAS = ['k','pk_lin','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
-	KEYS_A_B = ['k','pk_lin','A','B']
 	
 	def __init__(self):
 
 		cuba = ctypes.CDLL(self.PATH_CUBA,mode=ctypes.RTLD_GLOBAL)
 		self.regpt = ctypes.CDLL(self.PATH_REGPT,mode=ctypes.RTLD_GLOBAL)
-		self.pk_lin = Terms()
-		self.terms_2loop = Terms()
-		self.terms_bias = Terms()
-		self.terms_A_B = Terms()
+		self.pk_lin = TermsPkLin()
+		self.terms_2loop = Terms2Loop()
+		self.terms_bias = TermsBias()
+		self.terms_A_B = TermsAB()
 
 	def nodes_weights_gauss_legendre(self,xmin,xmax,nx):
 		
@@ -119,6 +255,7 @@ class PyRegPT(object):
 		return x,w
 		
 	def interpol_poly(self,x,tabx,taby):
+		
 		nx = len(tabx)
 		assert nx == len(taby)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(nx,))
@@ -127,6 +264,7 @@ class PyRegPT(object):
 		return self.regpt.interpol_poly(x,tabx,taby,nx)
 	
 	def interpol_lin(self,x,tabx,taby):
+		
 		self.regpt.interpol_lin.argtypes = (self.C_TYPE,)*5
 		self.regpt.interpol_lin.restype = self.C_TYPE
 		return self.regpt.interpol_lin(x,tabx[0],tabx[-1],taby[0],taby[-1])
@@ -141,15 +279,25 @@ class PyRegPT(object):
 		
 		return pk
 		
-	def find_pk_lin(self,k,mode=1):
+	def find_pk_lin(self,k,interpol='poly'):
 	
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
 		pk = scipy.zeros_like(k)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
 		self.regpt.find_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t,ctypes.c_size_t)
-		self.regpt.find_pk_lin(k,pk,len(k),mode)
+		self.regpt.find_pk_lin(k,pk,len(k),1 if interpol=='poly' else 0)
 		
 		return pk
+	
+	def calc_running_sigma_v2(self,k):
+		
+		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
+		sigma_v2 = scipy.zeros_like(k)
+		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
+		self.regpt.calc_running_sigma_v2.argtypes = (pointer,pointer,ctypes.c_size_t)
+		self.regpt.calc_running_sigma_v2(k,sigma_v2,len(k))
+		
+		return sigma_v2
 	
 	def set_pk_lin(self,k,pk):
 		
@@ -161,8 +309,14 @@ class PyRegPT(object):
 		self.regpt.set_pk_lin(self.pk_lin.k,self.pk_lin.pk_lin,self.pk_lin.size)
 		#self.regpt.set_pk_lin(k,pk,self.pk_lin.size)
 
-	def set_precision(self,calculation,n=100,interpol='poly'):
+	def set_precision(self,calculation='allq',n=100,interpol='poly'):
 	
+		if calculation == 'allq':
+			for calculation in ['gamma1_1loop','gamma1_2loop','gamma2_q','gamma2d','gamma2v','bias_q','A_B_q']:
+				self.set_precision(calculation,n=n,interpol=interpol)
+		if calculation == 'allmu':
+			for calculation in ['gamma2_mu','bias_mu','A_B_mu']:
+				self.set_precision(calculation,n=n,interpol=interpol)
 		func = getattr(self.regpt,'set_precision_'+calculation)
 		if calculation == 'pk_lin':
 			func.argtypes = (ctypes.c_char_p,)
@@ -174,12 +328,12 @@ class PyRegPT(object):
 	def set_k_2loop(self,k):
 		
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		for key in self.KEYS_2LOOP: self.terms_2loop[key] = scipy.zeros_like(k)
+		for key in self.terms_2loop.FIELDS: self.terms_2loop[key] = scipy.zeros_like(k)
 		self.terms_2loop.k = k
 		
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_2loop.size,))
-		self.regpt.set_k_2loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.KEYS_2LOOP)
-		self.regpt.set_k_2loop(self.terms_2loop.size,*[self.terms_2loop[key] for key in self.KEYS_2LOOP])
+		self.regpt.set_k_2loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.terms_2loop.FIELDS)
+		self.regpt.set_k_2loop(self.terms_2loop.size,*[self.terms_2loop[key] for key in self.terms_2loop.FIELDS])
 	
 	def run_2loop(self,a='delta',b='delta',nthreads=8):
 		
@@ -189,12 +343,12 @@ class PyRegPT(object):
 	def set_k_bias(self,k):
 		
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		for key in self.KEYS_BIAS: self.terms_bias[key] = scipy.zeros_like(k)
+		for key in self.terms_bias.FIELDS: self.terms_bias[key] = scipy.zeros_like(k)
 		self.terms_bias.k = k
 		
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_bias.size,))
-		self.regpt.set_k_bias.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.KEYS_BIAS)
-		self.regpt.set_k_bias(self.terms_bias.size,*[self.terms_bias[key] for key in self.KEYS_BIAS])
+		self.regpt.set_k_bias.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.terms_bias.FIELDS)
+		self.regpt.set_k_bias(self.terms_bias.size,*[self.terms_bias[key] for key in self.terms_bias.FIELDS])
 		
 	def run_bias(self,nthreads=8):
 		
@@ -205,33 +359,18 @@ class PyRegPT(object):
 		
 		self.terms_A_B.k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
 		self.terms_A_B.pk_lin = scipy.zeros_like(k)
-		self.terms_A_B.A = scipy.zeros((self.terms_A_B.k.size,3,3),dtype=self.C_TYPE).flatten()
-		self.terms_A_B.B = scipy.zeros((self.terms_A_B.k.size,4,3),dtype=self.C_TYPE).flatten()
+		for key in ['A','B']:
+			self.terms_A_B[key] = scipy.zeros((self.terms_A_B.k.size,)+self.terms_A_B.SHAPE[key],dtype=self.C_TYPE).flatten()
 		
-		pointers = [ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_A_B[key].size,)) for key in self.KEYS_A_B]
+		pointers = [ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_A_B[key].size,)) for key in self.terms_A_B.FIELDS]
 		self.regpt.set_k_A_B.argtypes = (ctypes.c_size_t,)+tuple(pointers)
-		self.regpt.set_k_A_B(self.terms_A_B.k.size,*[self.terms_A_B[key] for key in self.KEYS_A_B])
+		self.regpt.set_k_A_B(self.terms_A_B.k.size,*[self.terms_A_B[key] for key in self.terms_A_B.FIELDS])
 		
-		self.terms_A_B.A.shape = (self.terms_A_B.k.size,3,3)
-		self.terms_A_B.A = scipy.transpose(self.terms_A_B.A,axes=(1,2,0))
-		self.terms_A_B.B.shape = (self.terms_A_B.k.size,4,3)
-		self.terms_A_B.B = scipy.transpose(self.terms_A_B.B,axes=(1,2,0))
+		for key in ['A','B']:
+			self.terms_A_B[key].shape = (self.terms_A_B.k.size,) + self.terms_A_B.SHAPE[key]
+			self.terms_A_B[key] = scipy.transpose(self.terms_A_B[key],axes=(1,2,0))
 		
 	def run_A_B(self,nthreads=8):
 		
 		self.regpt.run_A_B.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_A_B(nthreads)
-	
-	def pk_2loop(self,Dgrowth=1.):
-		#Dgrowth is Dgrowth or sigma8...
-		#Taruya 2012 (arXiv 1208.1191v1) eq 24
-		factor = 0.5 * (self.terms_2loop['k']*Dgrowth)**2 * self.terms_2loop['sigma_v2']
-		G1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self.terms_2loop['G1a_1loop']*(1. + factor) + Dgrowth**4*self.terms_2loop['G1a_2loop'])
-		G1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self.terms_2loop['G1b_1loop']*(1. + factor) + Dgrowth**4*self.terms_2loop['G1b_2loop'])
-		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
-		pkcorr_G1 = G1a_reg * G1b_reg * self.terms_2loop['pk_lin']
-		#Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
-		pkcorr_G2 = Dgrowth**4 * scipy.exp(-2. * factor) * (self.terms_2loop['pkcorr_G2_tree_tree'] * (1. + factor)**2 + self.terms_2loop['pkcorr_G2_tree_1loop'] * Dgrowth**2 * (1. + factor) + self.terms_2loop['pkcorr_G2_1loop_1loop'] * Dgrowth**4)
-		#Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
-		pkcorr_G3 = Dgrowth**6 * scipy.exp(-2. * factor) * self.terms_2loop['pkcorr_G3_tree']
-		return pkcorr_G1 + pkcorr_G2 + pkcorr_G3

@@ -75,7 +75,7 @@ void calc_integ_pkcorr_G2(FLAG a,FLAG b,size_t iq,histo_t *integ_pkcorr1,histo_t
 	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
 	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
-	if (x>=0.5) mumax = 0.5/x; //symmetric q <-> k-q
+	if (x>=0.5) mumax = 0.5/x;
 	
 	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);
 	//nodes_weights_gauss_legendre(mumin,mumax,gauss_legendre_mu.mu,gauss_legendre_mu.w,gauss_legendre_mu.nmu);

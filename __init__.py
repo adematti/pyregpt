@@ -1,3 +1,3 @@
-from pyRegPT import PyRegPT
+from pyRegPT import PyRegPT,TermsPkLin,Terms2Loop,TermsBias,TermsAB,Pnowiggle
 
-__all__ = ['pyRegPT','PyRegPT']
+__all__ = ['PyRegPT','TermsPkLin','Terms2Loop','TermsBias','TermsAB','Pnowiggle']
