@@ -14,12 +14,15 @@ typedef float histo_t;
 typedef double histo_t;
 #endif //_FLOAT32
 
-#define MAX_IMU 10
+typedef enum {DELTA, THETA} FLAG;
+typedef enum {LIN, POLY} INTERPOL;
 
-/*
-#define MAX_IQ 100
-#define MAX_IMU 2
-*/
+typedef struct {
+	size_t n;
+	histo_t min;
+	histo_t max;
+	INTERPOL interpol;
+} Precision;
 
 typedef struct {
 	size_t nq;
@@ -63,6 +66,7 @@ typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
+	histo_t* sigma_v2;
 	histo_t* pkbias_b2d;
 	histo_t* pkbias_bs2d;
 	histo_t* pkbias_b2t;
@@ -77,13 +81,10 @@ typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
+	histo_t* sigma_v2;
 	histo_t* A;
 	histo_t* B;
 } TermsAB;
-
-
-typedef enum {DELTA, THETA} FLAG;
-typedef enum {LIN, POLY} INTERPOL;
 
 typedef histo_t (kernel_bias)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
 

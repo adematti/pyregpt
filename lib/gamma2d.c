@@ -1892,20 +1892,17 @@ histo_t kernel_Gamma2d(histo_t k1,histo_t k2,histo_t k3,histo_t q)
 
 static GaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
-static size_t nq_1loop = 100;
-static INTERPOL interpol_q_1loop = POLY;
+static Precision precision_q = {.n=100,.min=5e-4,.max=10.,.interpol=POLY};
 
-void set_precision_gamma2d(size_t nq_1loop_,char* interpol_q_1loop_)
+void set_precision_gamma2d(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	nq_1loop = nq_1loop_;
-	interpol_q_1loop = get_interpol(interpol_q_1loop_);
+	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
 void init_gamma2d()
 {
-	init_gauss_legendre_q(&gauss_legendre_q,nq_1loop,interpol_q_1loop,-1,-1);
+	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
 }
-
 
 void free_gamma2d()
 {

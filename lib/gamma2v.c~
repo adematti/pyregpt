@@ -1871,9 +1871,14 @@ static GaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
 static Precision precision_q = {.n=100,.min=5e-4,.max=10.,.interpol=POLY};
 
-void set_precision_gamma2v(size_t n_,histo_t min_,histo_t max_,char* interpol_)
+void set_precision_gamma2d(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
 	set_precision(&precision_q,n_,min_,max_,interpol_);
+}
+
+void init_gamma2d()
+{
+	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
 }
 
 void init_gamma2v()

@@ -51,6 +51,15 @@ def scale_factor(npk=1):
 		return wrapper
 	return _decorate
 
+def damping_factor(npk=1):
+	def _decorate(func):
+		@functools.wraps(func)				
+		def wrapper(self,Dgrowth=1.,*args,**kwargs):
+			factor = 0.5 * (self['k']*Dgrowth)**2 * self['sigma_v2']
+			return Dgrowth**(2*npk)*scipy.exp(-npk*factor)*(1.+factor)**npk*func(self,*args,**kwargs)
+		return wrapper
+	return _decorate
+
 class Terms(object):
 	
 	def __init__(self,columns={},fields=None):
@@ -129,7 +138,7 @@ class Terms(object):
 		pad_start = scipy.sum(k<self.k[0])
 		pad_end = scipy.sum(k>self.k[-1])
 		for key in self.FIELDS:
-			pad_width = (0,0)*(self[key].ndim-1) + (pad_start,pad_end)
+			pad_width = ((0,0))*(self[key].ndim-1) + ((pad_start,pad_end))
 			self[key] = scipy.pad(self[key],pad_width=pad_width,mode=mode,constant_values=constant_values)
 		self.k[:pad_start] = k[:pad_start]
 		self.k[-pad_end:] = k[-pad_end:]
@@ -173,7 +182,7 @@ class Terms2Loop(Terms):
 
 class TermsBias(Terms):
 	
-	FIELDS = ['k','pk_lin','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
+	FIELDS = ['k','pk_lin','sigma_v2','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
 	
 	@scale_factor(1)
 	def Plin(self):
@@ -210,10 +219,22 @@ class TermsBias(Terms):
 	@scale_factor(2)
 	def Psigma3sq(self):
 		return self['pk_lin']*self['sigma3sq']
+	
+	@damping_factor(2)
+	def Pb22damp(self):
+		return self['pkbias_b22']
+
+	@damping_factor(2)
+	def Pb2s2damp(self):
+		return self['pkbias_b2s2']
+
+	@damping_factor(2)
+	def Pbs22damp(self):
+		return self['pkbias_bs22']
 
 class TermsAB(Terms):
 	
-	FIELDS = ['k','pk_lin','A','B']
+	FIELDS = ['k','pk_lin','sigma_v2','A','B']
 	SHAPE = {'A':(3,3),'B':(4,3)}
 	
 	@scale_factor(1)
@@ -268,7 +289,8 @@ class PyRegPT(object):
 		self.regpt.interpol_lin.argtypes = (self.C_TYPE,)*5
 		self.regpt.interpol_lin.restype = self.C_TYPE
 		return self.regpt.interpol_lin(x,tabx[0],tabx[-1],taby[0],taby[-1])
-		
+	
+	"""	
 	def interpol_pk_lin(self,k):
 	
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
@@ -278,7 +300,7 @@ class PyRegPT(object):
 		self.regpt.interpol_pk_lin(k,pk,len(k))
 		
 		return pk
-		
+	"""	
 	def find_pk_lin(self,k,interpol='poly'):
 	
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
@@ -309,21 +331,33 @@ class PyRegPT(object):
 		self.regpt.set_pk_lin(self.pk_lin.k,self.pk_lin.pk_lin,self.pk_lin.size)
 		#self.regpt.set_pk_lin(k,pk,self.pk_lin.size)
 
-	def set_precision(self,calculation='allq',n=100,interpol='poly'):
+	def set_precision(self,calculation='allq',n=0,min=1.,max=-1.,interpol='test'):
 	
-		if calculation == 'allq':
-			for calculation in ['gamma1_1loop','gamma1_2loop','gamma2_q','gamma2d','gamma2v','bias_q','A_B_q']:
-				self.set_precision(calculation,n=n,interpol=interpol)
-		if calculation == 'allmu':
+		if calculation == 'all_q':
+			for calculation in ['2loop_q','bias_q','A_B_q']:
+				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
+			return
+		if calculation == 'all_mu':
 			for calculation in ['gamma2_mu','bias_mu','A_B_mu']:
-				self.set_precision(calculation,n=n,interpol=interpol)
+				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
+			return
+		if calculation == '2loop_q':
+			for calculation in ['gamma1_1loop','gamma1_2loop','gamma2_q','gamma2d','gamma2v','gamma3']:
+				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
+			return
 		func = getattr(self.regpt,'set_precision_'+calculation)
 		if calculation == 'pk_lin':
 			func.argtypes = (ctypes.c_char_p,)
 			func(interpol)
-		else:
+		elif calculation == 'gamma3':
+			func.argtypes = (self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
+			func(min,max,interpol)
+		elif 'mu' in calculation:
 			func.argtypes = (ctypes.c_size_t,ctypes.c_char_p)
 			func(n,interpol)
+		else:
+			func.argtypes = (ctypes.c_size_t,self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
+			func(n,min,max,interpol)
 	
 	def set_k_2loop(self,k):
 		
@@ -358,7 +392,8 @@ class PyRegPT(object):
 	def set_k_A_B(self,k):
 		
 		self.terms_A_B.k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		self.terms_A_B.pk_lin = scipy.zeros_like(k)
+		for key in ['pk_lin','sigma_v2']:
+			self.terms_A_B[key] = scipy.zeros_like(k)
 		for key in ['A','B']:
 			self.terms_A_B[key] = scipy.zeros((self.terms_A_B.k.size,)+self.terms_A_B.SHAPE[key],dtype=self.C_TYPE).flatten()
 		

@@ -11,10 +11,8 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
-static size_t nq_tree = 600;
-static size_t nmu_tree = 300;
-static INTERPOL interpol_q_tree = POLY;
-static INTERPOL interpol_mu_tree = POLY;
+static Precision precision_q = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
+static Precision precision_mu = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
 static const size_t INDEX_A[5][2] = {{0,0},{0,1},{1,1},{1,2},{2,2}};
 static const size_t INDEX_B[12][3] = {{0,0,0},{0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{1,1,1},{2,0,1},{2,1,0},{2,1,1},{3,1,1}};
 static const size_t SHAPE_A[2] = {3,3};
@@ -28,7 +26,7 @@ histo_t kernel_pkcorr_A_B(size_t iq, histo_t mu, histo_t pk_k, size_t n, size_t 
 	histo_t kq = gauss_legendre_q.k*my_sqrt(1.+x*x-2.*mu*x);
 	histo_t pk_q = gauss_legendre_q.pk[iq];
 	histo_t pk_kq;
-	find_pk_lin(&kq,&pk_kq,1,interpol_mu_tree);
+	find_pk_lin(&kq,&pk_kq,1,interpol_mu->interpol);
 	
 	return (*kernel)(n,a,b,k,x,kq,mu,pk_k,pk_q,pk_kq);
 }
@@ -42,7 +40,7 @@ histo_t calc_integ_pkcorr_A_B(size_t iq, histo_t pk_k, size_t n, size_t a, size_
 	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
 	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
-	//if (x>=0.5) mumax = 0.5/x;
+	//if (x>=0.5) mumax = 0.5/x; //not symmetric q <-> k-q
 	
 	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);
 	//nodes_weights_gauss_legendre(mumin,mumax,gauss_legendre_mu.mu,gauss_legendre_mu.w,gauss_legendre_mu.nmu);
@@ -53,23 +51,22 @@ histo_t calc_integ_pkcorr_A_B(size_t iq, histo_t pk_k, size_t n, size_t a, size_
 	return integ_A_B;
 }
 
-void set_precision_A_B_q(size_t nq_tree_,char* interpol_q_tree_)
+void set_precision_A_B_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	nq_tree = nq_tree_;
-	interpol_q_tree = get_interpol(interpol_q_tree_);
+	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
-void set_precision_A_B_mu(size_t nmu_tree_,char* interpol_mu_tree_)
+void set_precision_A_B_mu(size_t n_,char* interpol_)
 {
-	nmu_tree = nmu_tree_;
-	interpol_mu_tree = get_interpol(interpol_mu_tree_);
+	set_precision(&precision_mu,n_,-1.,1.,interpol_);
 }
 
 void init_A_B()
 {
-	init_gauss_legendre_q(&gauss_legendre_q,nq_tree,interpol_q_tree,-1,-1);
-	init_gauss_legendre_mu(&gauss_legendre_mu,nmu_tree);
+	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
+	init_gauss_legendre_mu(&gauss_legendre_mu,&precision_mu);
 }
+
 
 void free_A_B()
 {

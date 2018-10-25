@@ -11,10 +11,8 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
-static size_t nq_tree = 200;
-static size_t nmu_tree = 10;
-static INTERPOL interpol_q_tree = POLY;
-static INTERPOL interpol_mu_tree = POLY;
+static Precision precision_q = {.n=200,.min=5e-4,.max=10.,.interpol=POLY};
+static Precision precision_mu = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 
 histo_t Gamma2_tree(FLAG a, histo_t k1, histo_t k2, histo_t k3)
 {
@@ -44,7 +42,7 @@ void kernel_pkcorr_G2(FLAG a,FLAG b,size_t iq, histo_t mu, histo_t *kernel1, his
 	histo_t kq = gauss_legendre_q.k*my_sqrt(1.+x*x-2.*mu*x);
 	histo_t pk_q = gauss_legendre_q.pk[iq];
 	histo_t pk_kq;
-	find_pk_lin(&kq,&pk_kq,1,interpol_mu_tree);
+	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
 	histo_t G2a_tree,G2a_1loop,G2b_tree,G2b_1loop;
 	
 	if (a==b) {
@@ -93,22 +91,20 @@ void calc_integ_pkcorr_G2(FLAG a,FLAG b,size_t iq,histo_t *integ_pkcorr1,histo_t
 	
 }
 
-void set_precision_gamma2_q(size_t nq_tree_,char* interpol_q_tree_)
+void set_precision_gamma2_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	nq_tree = nq_tree_;
-	interpol_q_tree = get_interpol(interpol_q_tree_);
+	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
-void set_precision_gamma2_mu(size_t nmu_tree_,char* interpol_mu_tree_)
+void set_precision_gamma2_mu(size_t n_,char* interpol_)
 {
-	nmu_tree = nmu_tree_;
-	interpol_mu_tree = get_interpol(interpol_mu_tree_);
+	set_precision(&precision_mu,n_,-1.,1.,interpol_);
 }
 
 void init_gamma2()
 {
-	init_gauss_legendre_q(&gauss_legendre_q,nq_tree,interpol_q_tree,-1,-1);
-	init_gauss_legendre_mu(&gauss_legendre_mu,nmu_tree);
+	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
+	init_gauss_legendre_mu(&gauss_legendre_mu,&precision_mu);
 }
 
 void free_gamma2()

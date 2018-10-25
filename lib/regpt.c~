@@ -14,7 +14,7 @@
 #define STEP_VERBOSE 10
 
 static FLAG a,b;
-static INTERPOL interpol_pk = POLY;
+static INTERPOL interpol_pk_lin = POLY;
 static Terms2Loop terms_2loop;
 static TermsBias terms_bias;
 static TermsAB terms_A_B;
@@ -102,9 +102,9 @@ FLAG set_flag(char* f)
 	return DELTA;
 }
 
-void set_precision_pk_lin(char* interpol_pk_lin_)
+void set_precision_pk_lin(char* interpol_)
 {
-	interpol_pk = get_interpol(interpol_pk_lin_);
+	set_interpol(&interpol_pk_lin,interpol_);
 }
 
 void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk)
@@ -119,7 +119,7 @@ void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk)
 			continue;
 		}
 		for (iklin=iklin;iklin<pk_lin.nk-1;iklin++) {
-			if (kmax <= pk_lin.k[iklin+1]) {
+			if (kmax < pk_lin.k[iklin+1]) {
 				histo_t pk_kmax = interpol_lin(kmax,pk_lin.k[iklin],pk_lin.k[iklin+1],pk_lin.pk[iklin],pk_lin.pk[iklin+1]);
 				sigmav2[ik] = (sigmav2_ + (pk_kmax + pk_lin.pk[iklin]) * (kmax - pk_lin.k[iklin]))/(12.*M_PI*M_PI);
 				break;
@@ -144,7 +144,7 @@ void run_2loop(char* a_,char* b_,size_t num_threads)
 	size_t step_verbose = MAX(terms_2loop.nk*STEP_VERBOSE/100,1);
 
 	timer(0);
-	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk);
+	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk_lin);
 	calc_running_sigma_v2(terms_2loop.k,terms_2loop.sigma_v2,terms_2loop.nk);
 #pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose) private(ik)
 	{
@@ -183,11 +183,12 @@ void run_2loop(char* a_,char* b_,size_t num_threads)
 }
 
 
-void set_k_bias(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* pkbias_b2d,histo_t* pkbias_bs2d,histo_t* pkbias_b2t,histo_t* pkbias_bs2t,histo_t* pkbias_b22,histo_t* pkbias_b2s2,histo_t* pkbias_bs22,histo_t* sigma3sq)
+void set_k_bias(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* pkbias_b2d,histo_t* pkbias_bs2d,histo_t* pkbias_b2t,histo_t* pkbias_bs2t,histo_t* pkbias_b22,histo_t* pkbias_b2s2,histo_t* pkbias_bs22,histo_t* sigma3sq)
 {
 	terms_bias.nk = nk;
 	terms_bias.k = k;
 	terms_bias.pk_lin = pk_lin;
+	terms_bias.sigma_v2 = sigma_v2;
 	terms_bias.pkbias_b2d = pkbias_b2d;
 	terms_bias.pkbias_bs2d = pkbias_bs2d;
 	terms_bias.pkbias_b2t = pkbias_b2t;
@@ -214,7 +215,8 @@ void run_bias(size_t num_threads)
 	size_t step_verbose = MAX(terms_bias.nk*STEP_VERBOSE/100,1);
 
 	timer(0);
-	find_pk_lin(terms_bias.k,terms_bias.pk_lin,terms_bias.nk,interpol_pk);
+	find_pk_lin(terms_bias.k,terms_bias.pk_lin,terms_bias.nk,interpol_pk_lin);
+	calc_running_sigma_v2(terms_bias.k,terms_bias.sigma_v2,terms_bias.nk);
 #pragma omp parallel default(none) shared(terms_bias,step_verbose) private(ik)
 	{
 		init_bias();
@@ -244,11 +246,12 @@ void run_bias(size_t num_threads)
 #endif //_VERBOSE
 }
 
-void set_k_A_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* A,histo_t* B)
+void set_k_A_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* A,histo_t* B)
 {
 	terms_A_B.nk = nk;
 	terms_A_B.k = k;
 	terms_A_B.pk_lin = pk_lin;
+	terms_A_B.sigma_v2 = sigma_v2;
 	terms_A_B.A = A;
 	terms_A_B.B = B;
 	
@@ -269,7 +272,8 @@ void run_A_B(size_t num_threads)
 	size_t step_verbose = MAX(terms_A_B.nk*STEP_VERBOSE/100,1);
 
 	timer(0);
-	find_pk_lin(terms_A_B.k,terms_A_B.pk_lin,terms_A_B.nk,interpol_pk);
+	find_pk_lin(terms_A_B.k,terms_A_B.pk_lin,terms_A_B.nk,interpol_pk_lin);
+	calc_running_sigma_v2(terms_A_B.k,terms_A_B.sigma_v2,terms_A_B.nk);
 #pragma omp parallel default(none) shared(terms_A_B,step_verbose) private(ik)
 	{
 		init_A_B();

@@ -213,10 +213,11 @@ void set_precision_gamma1_2loop(size_t n_,histo_t min_,histo_t max_,char* interp
 	set_precision(&precision_q_2loop,n_,min_,max_,interpol_);
 }
 
+
 void init_gamma1()
 {
-	init_gauss_legendre_q(&gauss_legendre_q_1loop,&precision_q_1loop);
-	init_gauss_legendre_q(&gauss_legendre_q_2loop,&precision_q_2loop);
+	init_gauss_legendre_q(&gauss_legendre_q_1loop,precision_q_1loop);
+	init_gauss_legendre_q(&gauss_legendre_q_2loop,precision_q_2loop);
 }
 
 void free_gamma1()

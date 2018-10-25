@@ -11,10 +11,8 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
-static size_t nq_tree = 600;
-static size_t nmu_tree = 300;
-static INTERPOL interpol_q_tree = POLY;
-static INTERPOL interpol_mu_tree = POLY;
+static Precision precision_q = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
+static Precision precision_mu = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
 
 histo_t kernel_pkcorr_bias(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
 {
@@ -24,7 +22,7 @@ histo_t kernel_pkcorr_bias(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
 	histo_t kq = gauss_legendre_q.k*my_sqrt(1.+x*x-2.*mu*x);
 	histo_t pk_q = gauss_legendre_q.pk[iq];
 	histo_t pk_kq;
-	find_pk_lin(&kq,&pk_kq,1,interpol_mu_tree);
+	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
 	histo_t mukkq = (k*k - kq*kq - q*q)/2./q/kq;
 	
 	return (*kernel)(a,q,kq,mu,mukkq,pk_q,pk_kq); 
@@ -53,22 +51,20 @@ histo_t calc_integ_pkcorr_bias(FLAG a,size_t iq, kernel_bias kernel, _Bool run_h
 
 }
 
-void set_precision_bias_q(size_t nq_tree_,char* interpol_q_tree_)
+void set_precision_bias_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	nq_tree = nq_tree_;
-	interpol_q_tree = get_interpol(interpol_q_tree_);
+	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
-void set_precision_bias_mu(size_t nmu_tree_,char* interpol_mu_tree_)
+void set_precision_bias_mu(size_t n_,char* interpol_)
 {
-	nmu_tree = nmu_tree_;
-	interpol_mu_tree = get_interpol(interpol_mu_tree_);
+	set_precision(&precision_mu,n_,-1.,1.,interpol_);
 }
 
 void init_bias()
 {
-	init_gauss_legendre_q(&gauss_legendre_q,nq_tree,interpol_q_tree,-1,-1);
-	init_gauss_legendre_mu(&gauss_legendre_mu,nmu_tree);
+	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
+	init_gauss_legendre_mu(&gauss_legendre_mu,&precision_mu);
 }
 
 void free_bias()

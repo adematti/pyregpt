@@ -139,6 +139,23 @@ histo_t interpol_poly(histo_t x,histo_t *tabx,histo_t *taby,size_t nx)
 	return y;
 }
 
+void interpol_pk_lin(histo_t* k,histo_t* pk,size_t nk)
+{
+	size_t ik;
+	size_t start=0;
+	size_t end=pk_lin.nk;
+	histo_t kstart = pk_lin.k[0];
+	histo_t kend = pk_lin.k[end-1];
+	for (ik=0;ik<nk;ik++) {
+		if ((k[ik]>=kstart)&&(k[ik]<=kend)) {
+			size_t ind = get_dichotomy_index(k[ik],pk_lin.k,start,end);
+			start = ind;
+			pk[ik] = interpol_lin(k[ik],pk_lin.k[ind],pk_lin.k[ind+1],pk_lin.pk[ind],pk_lin.pk[ind+1]);
+		}
+		else pk[ik] = 0.;
+	}
+}
+
 histo_t extrapol_pk_lin(histo_t k)
 {
 	size_t ik;
@@ -234,7 +251,7 @@ void nodes_weights_gauss_legendre(histo_t xmin,histo_t xmax,histo_t *x,histo_t *
 void init_gauss_legendre_q(GaussLegendreQ *gauss_legendre,Precision *precision)
 {
 	histo_t qmin=precision->min,qmax=precision->max;
-	if ((qmin<=0.)||(qmax<=0.)) {
+	if ((qmin<=0.)&&(qmax<=0.)) {
 		qmin = pk_lin.k[0];
 		qmax = pk_lin.k[pk_lin.nk-1];
 	}
@@ -279,7 +296,6 @@ void init_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,Precision *precision
 	histo_t mumin=-1.,mumax=1.;
 	size_t size = sizeof(histo_t);
 	size_t nmu = precision->n;
-	gauss_legendre->nmu = nmu;
 	gauss_legendre->muref = (histo_t *) calloc(nmu,size);
 	gauss_legendre->wref = (histo_t *) calloc(nmu,size);
 	gauss_legendre->mu = (histo_t *) calloc(nmu,size);
@@ -415,22 +431,3 @@ void write_2loop(Terms2Loop terms_2loop,char *fn)
 	}
 	fclose(fr);
 }
-
-/*
-void interpol_pk_lin(histo_t* k,histo_t* pk,size_t nk)
-{
-	size_t ik;
-	size_t start=0;
-	size_t end=pk_lin.nk;
-	histo_t kstart = pk_lin.k[0];
-	histo_t kend = pk_lin.k[end-1];
-	for (ik=0;ik<nk;ik++) {
-		if ((k[ik]>=kstart)&&(k[ik]<=kend)) {
-			size_t ind = get_dichotomy_index(k[ik],pk_lin.k,start,end);
-			start = ind;
-			pk[ik] = interpol_lin(k[ik],pk_lin.k[ind],pk_lin.k[ind+1],pk_lin.pk[ind],pk_lin.pk[ind+1]);
-		}
-		else pk[ik] = 0.;
-	}
-}
-*/

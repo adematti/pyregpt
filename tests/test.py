@@ -97,6 +97,7 @@ def test_2loop(a='delta',b='delta'):
 
 	k,pklin = load_pklin()
 	pyregpt = PyRegPT()
+	pyregpt.set_precision(calculation='2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
 	ref = load_reference_gamma(a,b)[20:40]
 	pyregpt.set_k_2loop(ref['k'])
@@ -145,7 +146,7 @@ def test_precision(a='delta',b='delta'):
 	pyregpt2 = PyRegPT()
 	pyregpt2.set_pk_lin(k,pklin)
 	#pyregpt2.set_precision(calculation='gamma1_1loop',n=700,interpol='poly')
-	pyregpt2.set_precision(calculation='allq',n=700,interpol='poly')
+	pyregpt2.set_precision(calculation='all_q',n=700,interpol='poly')
 	pyregpt2.set_k_2loop(pyregpt.pk_lin.k[10:20])
 	pyregpt2.run_2loop(a,b,nthreads=nthreads)
 	
@@ -157,6 +158,7 @@ def test_precision(a='delta',b='delta'):
 def test_pk_2loop(a='delta',b='delta'):
 	k,pklin = load_pklin()
 	pyregpt = PyRegPT()
+	pyregpt.set_precision(calculation='2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
 	ref = load_reference_pk(a,b)[20:30]
 	pyregpt.set_k_2loop(ref['k'])
@@ -194,9 +196,9 @@ def test_A_B():
 #test_interpol_poly()
 #test_find_pk_lin()
 #test_sigma_v2()
-#test_2loop()
-#test_all_2loop()
-test_pad()
+#test_2loop(a='delta',b='theta')
+test_all_2loop()
+#test_pad()
 #test_precision()
 #test_bias()
 #test_A_B()
