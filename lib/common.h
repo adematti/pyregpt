@@ -17,6 +17,8 @@ histo_t my_sin(histo_t x);
 
 histo_t my_cos(histo_t x);
 
+histo_t power(histo_t x,const size_t n);
+
 void powers(histo_t x,histo_t *tab, const size_t npowers);
 
 void set_interpol(INTERPOL *current,char *new);

@@ -72,9 +72,25 @@ def test_find_pk_lin():
 	testing.assert_allclose(pklin,pk,rtol=1e-7,atol=1e-7)
 	
 	kout = kout/1.2
+	kout = kout[kout>k[0]]
 	pk = pyregpt.find_pk_lin(kout,interpol='lin')
 	ref = scipy.interp(kout,k,pklin,left=0.,right=0.)
 	testing.assert_allclose(ref,pk,rtol=1e-7,atol=1e-7)
+
+def plot_pk_lin():
+	
+	from matplotlib import pyplot
+	k,pklin = load_pklin()
+	pyregpt = PyRegPT()
+	pyregpt.set_pk_lin(k,pklin)
+	kout = scipy.logspace(scipy.log10(k[0])-1,scipy.log10(k[-1])+1,1000,base=10)
+	for interpol in ['lin','poly']:
+		pyplot.loglog(kout,pyregpt.find_pk_lin(kout,interpol=interpol),label=interpol)
+	pyplot.legend()
+	pyplot.axvline(x=k[0],ymin=0.,ymax=1.)
+	pyplot.axvline(x=k[-1],ymin=0.,ymax=1.)
+	pyplot.show()
+	
 
 def test_interpol_poly():
 	
@@ -84,6 +100,7 @@ def test_interpol_poly():
 	for i in range(200):
 		for x,y in zip(tabx,taby):
 			assert pyregpt.interpol_poly(x,tabx,taby)==y
+	print pyregpt.interpol_poly(0.5,tabx,taby)
 
 def test_sigma_v2():
 	k,pklin = load_pklin()
@@ -194,7 +211,7 @@ def test_A_B():
 #test_gauss_legendre()
 #test_interpol_pk_lin()
 #test_interpol_poly()
-#test_find_pk_lin()
+test_find_pk_lin()
 #test_sigma_v2()
 #test_2loop(a='delta',b='theta')
 test_all_2loop()
@@ -202,3 +219,5 @@ test_all_2loop()
 #test_precision()
 #test_bias()
 #test_A_B()
+
+#plot_pk_lin()

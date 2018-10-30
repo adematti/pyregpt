@@ -34,7 +34,6 @@ INCLUDECOM = -I./lib -I$(GSL_INC) -I$(CUBA_INC)
 LIBCPU = $(LGSL) $(LCUBA) -lm
 
 #.c FILES
-CDEF = $(REGPT_LIB)/define.c
 CCOM = $(REGPT_LIB)/common.c
 CKERN = $(REGPT_LIB)/kernels.c
 CGAM1 = $(REGPT_LIB)/calc_pkcorr_from_gamma1.c
@@ -47,7 +46,6 @@ CAB = $(REGPT_LIB)/calc_pkcorr_from_A_B.c
 CREGPT = $(REGPT_LIB)/regpt.c
 
 #.o FILES
-ODEF = $(REGPT_LIB)/define.o
 OCOM = $(REGPT_LIB)/common.o
 OKERN = $(REGPT_LIB)/kernels.o
 OGAM1 = $(REGPT_LIB)/calc_pkcorr_from_gamma1.o
@@ -58,7 +56,7 @@ OGAM3 = $(REGPT_LIB)/calc_pkcorr_from_gamma3.o
 OBIAS = $(REGPT_LIB)/calc_pkcorr_from_bias.o
 OAB = $(REGPT_LIB)/calc_pkcorr_from_A_B.o
 OREGPT = $(REGPT_LIB)/regpt.o
-OFILES = $(ODEF) $(OCOM) $(OKERN) $(OGAM1) $(OGAM2) $(OGAM2d) $(OGAM2v) $(OGAM3) $(OBIAS) $(OAB) $(OREGPT)
+OFILES = $(OCOM) $(OKERN) $(OGAM1) $(OGAM2) $(OGAM2d) $(OGAM2v) $(OGAM3) $(OBIAS) $(OAB) $(OREGPT)
 
 #FINAL GOAL
 EXE = REGPT
@@ -66,8 +64,6 @@ EXE = REGPT
 #RULES
 default : $(EXE)
 #RULE TO MAKE .o's FROM .c's
-$(ODEF) : $(CDEF) Makefile
-	$(COMPCPU) $(OPTCPU) -fPIC -c $< -o $@ $(INCLUDECOM) $(LIBCPU)
 $(OCOM) : $(CCOM) Makefile
 	$(COMPCPU) $(OPTCPU) -fPIC -c $< -o $@ $(INCLUDECOM) $(LIBCPU)
 $(OKERN) : $(CKERN) Makefile

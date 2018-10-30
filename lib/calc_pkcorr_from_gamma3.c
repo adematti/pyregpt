@@ -171,7 +171,7 @@ void calc_pkcorr_from_gamma3(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tr
 	double integral[NCOMP]={0.}, error[NCOMP]={0.}, prob[NCOMP]={0.};
 
 	Vegas(NDIM, NCOMP, integ_pkcorr_G3, EPSREL, EPSABS, VERBOSE, MINEVAL, MAXEVAL, NSTART, NINCREASE, &neval, &fail, integral, error, prob);
-	*pkcorr_G3_tree = 6.*integral[0]/my_pow(2.*M_PI,6);
+	*pkcorr_G3_tree = 6.*integral[0]/power(2.*M_PI,6);
 
 }
 

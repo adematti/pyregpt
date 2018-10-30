@@ -26,10 +26,10 @@ histo_t kernel_ff(histo_t x)
 	}
 	else {
 		x2 = x*x;
-		kernel_ff = 6./x2 - 79. + 50.*x2 - 21.*x2*x2 + 0.75*my_pow(1./x-x,3) * (2. + 7.*x2) * 2 * my_log(my_abs(diffx/(1.+x)));
+		kernel_ff = 6./x2 - 79. + 50.*x2 - 21.*x2*x2 + 0.75*power(1./x-x,3) * (2. + 7.*x2) * 2 * my_log(my_abs(diffx/(1.+x)));
 		kernel_ff /= 504.;
 #ifdef _DEBUG
-		//printf("%.10g %.10g %.10g\n",x,6./x2 - 79. + 50.*x2 - 21.*x2*x2,0.75*my_pow(1./x-x,3) * (2. + 7.*x2) * 2 * my_log(my_abs(diffx/(1.+x))));
+		//printf("%.10g %.10g %.10g\n",x,6./x2 - 79. + 50.*x2 - 21.*x2*x2,0.75*power(1./x-x,3) * (2. + 7.*x2) * 2 * my_log(my_abs(diffx/(1.+x))));
 #endif //_DEBUG
 	}
 	return kernel_ff * x;
@@ -49,7 +49,7 @@ histo_t kernel_gg(histo_t x)
 	}
 	else {
 		x2 = x*x;
-		kernel_gg = 6./x2 - 41. + 2.*x2 - 3.*x2*x2 + 0.75*my_pow(1./x-x,3) * (2. + x2) * 2 * my_log(my_abs(diff/(1.+x)));
+		kernel_gg = 6./x2 - 41. + 2.*x2 - 3.*x2*x2 + 0.75*power(1./x-x,3) * (2. + x2) * 2 * my_log(my_abs(diff/(1.+x)));
 		kernel_gg /= 168.;
 	}
 	return kernel_gg * x;
@@ -98,7 +98,7 @@ histo_t beta(FLAG a, histo_t q1, histo_t q2) {
 			histo_t y8 = y4*y4;
 			histo_t y10 = y2*y8;
 			histo_t y12 = y2*y10;
-			return (2.*(1. + y2)*(-11191. + 118054.*y2 - 18215.*y4 + 18215.*y8 - 118054.*y10 + 11191.*y12 + 60.*y4*(3467. - 790.*y2 + 3467.*y4)*2*my_log(y))) / (429975.*my_pow((-1. + y2),7));
+			return (2.*(1. + y2)*(-11191. + 118054.*y2 - 18215.*y4 + 18215.*y8 - 118054.*y10 + 11191.*y12 + 60.*y4*(3467. - 790.*y2 + 3467.*y4)*2*my_log(y))) / (429975.*power((-1. + y2),7));
 		}
 	}
 	else { //THETA
@@ -117,7 +117,7 @@ histo_t beta(FLAG a, histo_t q1, histo_t q2) {
 			histo_t y8 = y4*y4;
 			histo_t y10 = y2*y8;
 			histo_t y12 = y2*y10;
-			return (2.*(1. + y2)*(-54373. + 562162.*y2 - 408245.*y4 + 408245.*y8 - 562162.*y10 + 54373.*y12 + 60.*y4*(14561. - 10690.*y2 + 14561.*y4)*2*my_log(y))) / (4.729725e6*my_pow((-1. + y2),7));
+			return (2.*(1. + y2)*(-54373. + 562162.*y2 - 408245.*y4 + 408245.*y8 - 562162.*y10 + 54373.*y12 + 60.*y4*(14561. - 10690.*y2 + 14561.*y4)*2*my_log(y))) / (4.729725e6*power((-1. + y2),7));
 		}
 	}
 }
@@ -200,7 +200,7 @@ histo_t two_loop_gamma1(FLAG a)
 		}
 		gamma += gauss_legendre_q_2loop.w[iq1] * integ_pkcorr_gamma1 * gauss_legendre_q_2loop.pk[iq1];
 	}
-	return gamma / (4.*M_PI*M_PI*M_PI*M_PI);
+	return gamma / (4.*power(M_PI,4));
 }
 
 void set_precision_gamma1_1loop(size_t n_,histo_t min_,histo_t max_,char* interpol_)

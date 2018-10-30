@@ -11,7 +11,7 @@ histo_t LFunc(histo_t k, histo_t q);
 
 histo_t WFunc(histo_t k1, histo_t k2, histo_t k3, histo_t q);
 
-histo_t betafunc(size_t i,histo_t z);
+histo_t betafunc(size_t a,histo_t z);
 
 histo_t small_beta(histo_t k, histo_t q);
 

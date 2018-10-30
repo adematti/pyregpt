@@ -147,7 +147,6 @@ static void integ_pkcorr_G3(const int *ndim, const double xx[],const int *ncomp,
 void set_precision_gamma3(histo_t min_,histo_t max_,char* interpol_)
 {
 	set_precision(&precision_q,0,min_,max_,interpol_);
-	printf("%.6f %.6f\n",precision_q.min,precision_q.max);
 }
 
 void init_gamma3()
