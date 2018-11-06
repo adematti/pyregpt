@@ -197,6 +197,7 @@ void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 	}
 }
 
+
 void set_precision(Precision *precision,size_t n,histo_t min,histo_t max,char *interpol)
 {
 	if (n>0) precision->n = n;

@@ -173,6 +173,30 @@ histo_t extrapol_pk_lin(histo_t k)
 	return pk_lin.pk[end]*my_pow((k/pk_lin.k[end]),n_eff);
 }
 
+/*
+void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
+{
+	size_t ik;
+	size_t start=0;
+	size_t end=pk_lin.nk-1;
+	histo_t kstart = pk_lin.k[start];
+	histo_t kend = pk_lin.k[end];
+	for (ik=0;ik<nk;ik++) {
+		if (k[ik]>kend) pk[ik] = extrapol_pk_lin(k[ik]);
+		//else if (k[ik]<kstart) pk[ik] = 0.;
+		else {
+			size_t ind = get_dichotomy_index(k[ik],pk_lin.k,start,end+1);
+			start = ind;
+			if (interpol==POLY) {
+				size_t ikmin = MAX(0,((long) ind)-2);
+				size_t ikmax = MIN(end,ind+2);
+				pk[ik] = interpol_poly(k[ik],&(pk_lin.k[ikmin]),&(pk_lin.pk[ikmin]),ikmax-ikmin+1);
+			}
+			else pk[ik] = interpol_lin(k[ik],pk_lin.k[ind],pk_lin.k[ind+1],pk_lin.pk[ind],pk_lin.pk[ind+1]);
+		}
+	}
+}
+*/
 
 void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 {
@@ -182,8 +206,8 @@ void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 	histo_t kstart = pk_lin.k[start];
 	histo_t kend = pk_lin.k[end];
 	for (ik=0;ik<nk;ik++) {
-		if (k[ik]>=kend) pk[ik] = extrapol_pk_lin(k[ik]);
-		//else if (k[ik]<kstart) pk[ik] = 0.;
+		if (k[ik]>kend) pk[ik] = 0.;
+		else if (k[ik]<kstart) pk[ik] = 0.;
 		else {
 			size_t ind = get_dichotomy_index(k[ik],pk_lin.k,start,end+1);
 			start = ind;

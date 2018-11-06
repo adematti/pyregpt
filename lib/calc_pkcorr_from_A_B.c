@@ -39,7 +39,9 @@ histo_t calc_integ_pkcorr_A_B(size_t iq, histo_t pk_k, size_t n, size_t a, size_
 	histo_t xmin = gauss_legendre_q.x[0];
 	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
-	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
+	histo_t mumax = MIN((1.+x*x-xmin*xmin)/2./x,1.);
+	if ((mumin>=1.)||(mumax<=-1.)||(mumax<=mumin)) return 0.;
+	//if (xmax<1.) pk_k = 0.;
 	//if (x>=0.5) mumax = 0.5/x; //not symmetric q <-> k-q
 	
 	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);

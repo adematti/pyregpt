@@ -54,8 +54,8 @@ def scale_factor(npk=1):
 def damping_factor(npk=1):
 	def _decorate(func):
 		@functools.wraps(func)				
-		def wrapper(self,Dgrowth=1.,*args,**kwargs):
-			factor = 0.5 * (self['k']*Dgrowth)**2 * self['sigma_v2']
+		def wrapper(self,Dgrowth=1.,sigmav2=None,*args,**kwargs):
+			factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigmav2 is None else sigmav2)
 			return Dgrowth**(2*npk)*scipy.exp(-npk*factor)*(1.+factor)**npk*func(self,*args,**kwargs)
 		return wrapper
 	return _decorate
@@ -148,10 +148,14 @@ class Terms(object):
 	
 	def nan_to_zero(self):
 		for key in self.FIELDS: self[key][scipy.isnan(self[key])] = 0.
+		
+	def rescale(self,scale=1.):
+		for key in self.fields: self[key] *= scale**(2*self.SCALE[key])
 
 class TermsPkLin(Terms):
 
 	FIELDS = ['k','pk_lin']
+	SCALE = {'k':0,'pk_lin':1}
 	
 	@scale_factor(1)
 	def Plin(self):
@@ -161,15 +165,16 @@ class TermsPkLin(Terms):
 class Terms2Loop(Terms):
 
 	FIELDS = ['k','pk_lin','sigma_v2','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree']
+	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'G1a_1loop':1,'G1a_2loop':2,'G1b_1loop':1,'G1b_2loop':2,'pkcorr_G2_tree_tree':2,'pkcorr_G2_tree_1loop':3,'pkcorr_G2_1loop_1loop':4,'pkcorr_G3_tree':3}
 	
 	@scale_factor(1)
 	def Plin(self):
 		return self['pk_lin']
 	
-	def P2loop(self,Dgrowth=1.):
+	def P2loop(self,Dgrowth=1.,sigmav2=None):
 		#Dgrowth is Dgrowth or sigma8...
 		#Taruya 2012 (arXiv 1208.1191v1) eq 24
-		factor = 0.5 * (self['k']*Dgrowth)**2 * self['sigma_v2']
+		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigmav2 is None else sigmav2)
 		G1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1a_1loop']*(1. + factor) + Dgrowth**4*self['G1a_2loop'])
 		G1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1b_1loop']*(1. + factor) + Dgrowth**4*self['G1b_2loop'])
 		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
@@ -183,6 +188,7 @@ class Terms2Loop(Terms):
 class TermsBias(Terms):
 	
 	FIELDS = ['k','pk_lin','sigma_v2','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
+	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'pkbias_b2d':2,'pkbias_bs2d':2,'pkbias_b2t':2,'pkbias_bs2t':2,'pkbias_b22':2,'pkbias_b2s2':2,'pkbias_bs22':2,'sigma3sq':2}
 	
 	@scale_factor(1)
 	def Plin(self):
@@ -235,6 +241,7 @@ class TermsBias(Terms):
 class TermsAB(Terms):
 	
 	FIELDS = ['k','pk_lin','sigma_v2','A','B']
+	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'A':2,'B':2}
 	SHAPE = {'A':(3,3),'B':(4,3)}
 	
 	@scale_factor(1)
@@ -311,12 +318,12 @@ class PyRegPT(object):
 		
 		return pk
 	
-	def calc_running_sigma_v2(self,k):
+	def calc_running_sigma_v2(self,k,uvcutoff=0.5):
 		
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
 		sigma_v2 = scipy.zeros_like(k)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
-		self.regpt.calc_running_sigma_v2.argtypes = (pointer,pointer,ctypes.c_size_t)
+		self.regpt.calc_running_sigma_v2.argtypes = (pointer,pointer,ctypes.c_size_t,self.C_TYPE)
 		self.regpt.calc_running_sigma_v2(k,sigma_v2,len(k))
 		
 		return sigma_v2

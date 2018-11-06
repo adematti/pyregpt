@@ -20,6 +20,7 @@ histo_t kernel_pkcorr_bias(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
 	histo_t k = gauss_legendre_q.k;
 	histo_t q = gauss_legendre_q.q[iq];
 	histo_t kq = gauss_legendre_q.k*my_sqrt(1.+x*x-2.*mu*x);
+	//if ((kq<gauss_legendre_q.q[0])||(kq>gauss_legendre_q.q[gauss_legendre_q.nq-1])) return 0.; //superfluous
 	histo_t pk_q = gauss_legendre_q.pk[iq];
 	histo_t pk_kq;
 	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
@@ -36,12 +37,12 @@ histo_t calc_integ_pkcorr_bias(FLAG a,size_t iq, kernel_bias kernel, _Bool run_h
 	histo_t xmin = gauss_legendre_q.x[0];
 	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
-	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
+	histo_t mumax = MIN((1.+x*x-xmin*xmin)/2./x,1.);
+	if ((mumin>=1.)||(mumax<=-1.)||(mumax<=mumin)) return 0.; 
 	if (run_half) {
 		if (x>=0.5) mumax = 0.5/x; //symmetric q <-> k-q, shorter and avoids oscillations
 	}
 	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);
-	//nodes_weights_gauss_legendre(mumin,mumax,gauss_legendre_mu.mu,gauss_legendre_mu.w,gauss_legendre_mu.nmu);
 	size_t imu,nmu=gauss_legendre_mu.nmu;
 	
 	for (imu=0;imu<nmu;imu++) integ_bias += kernel_pkcorr_bias(a, iq, gauss_legendre_mu.mu[imu], kernel) * gauss_legendre_mu.w[imu];

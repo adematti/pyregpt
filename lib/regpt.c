@@ -15,6 +15,7 @@
 
 static FLAG a,b;
 static INTERPOL interpol_pk_lin = POLY;
+static histo_t uvcutoff = 0.5;
 static Terms2Loop terms_2loop;
 static TermsBias terms_bias;
 static TermsAB terms_A_B;
@@ -107,13 +108,18 @@ void set_precision_pk_lin(char* interpol_)
 	set_interpol(&interpol_pk_lin,interpol_);
 }
 
-void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk)
+void set_precision_sigma_v2(histo_t uvcutoff_)
+{
+	uvcutoff = uvcutoff_;
+}
+
+void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk,histo_t uvcutoff)
 {
 	//sigmav^2 = int_0^{k/2} dq P0(q)/(6*pi^2)
-	size_t ik,iklin=0;
+	size_t ik,iklin = 0;
 	histo_t sigmav2_ = 0.;
 	for (ik=0;ik<nk;ik++) {
-		histo_t kmax = k[ik]/2.;
+		histo_t kmax = k[ik]*uvcutoff;
 		if (kmax < pk_lin.k[0]) {
 			sigmav2[ik] = 0.;
 			continue;
@@ -145,7 +151,7 @@ void run_2loop(char* a_,char* b_,size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_2loop.k,terms_2loop.sigma_v2,terms_2loop.nk);
+	calc_running_sigma_v2(terms_2loop.k,terms_2loop.sigma_v2,terms_2loop.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose) private(ik)
 	{
 		init_gamma1();
@@ -216,7 +222,7 @@ void run_bias(size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_bias.k,terms_bias.pk_lin,terms_bias.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_bias.k,terms_bias.sigma_v2,terms_bias.nk);
+	calc_running_sigma_v2(terms_bias.k,terms_bias.sigma_v2,terms_bias.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_bias,step_verbose) private(ik)
 	{
 		init_bias();
@@ -227,6 +233,7 @@ void run_bias(size_t num_threads)
 			if (ik % step_verbose == 0) printf(" - Computation done at %zu percent.\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
 			terms_bias.pkbias_b2d[ik] = calc_pkcorr_from_bias(DELTA,k,kernel_b2,1);
+			//terms_bias.pkbias_b2d[ik] = calc_pkcorr_from_bias(DELTA,k,kernel_b2,0);
 			terms_bias.pkbias_bs2d[ik] = calc_pkcorr_from_bias(DELTA,k,kernel_bs2,1);
 			terms_bias.pkbias_b2t[ik] = calc_pkcorr_from_bias(THETA,k,kernel_b2,1);
 			terms_bias.pkbias_bs2t[ik] = calc_pkcorr_from_bias(THETA,k,kernel_bs2,1);
@@ -273,7 +280,7 @@ void run_A_B(size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_A_B.k,terms_A_B.pk_lin,terms_A_B.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_A_B.k,terms_A_B.sigma_v2,terms_A_B.nk);
+	calc_running_sigma_v2(terms_A_B.k,terms_A_B.sigma_v2,terms_A_B.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_A_B,step_verbose) private(ik)
 	{
 		init_A_B();
