@@ -18,7 +18,7 @@ static const size_t INDEX_B[12][3] = {{0,0,0},{0,0,1},{0,1,0},{0,1,1},{1,0,0},{1
 static const size_t SHAPE_A[2] = {3,3};
 static const size_t SHAPE_B[2] = {4,3};
 
-histo_t kernel_pkcorr_A_B(size_t iq, histo_t mu, histo_t pk_k, size_t n, size_t a, size_t b, kernel_A_B kernel)
+histo_t kernel_pkcorr_A_B(size_t iq, histo_t mu, histo_t dmu, histo_t pk_k, size_t n, size_t a, size_t b, kernel_A_B kernel)
 {
 	histo_t x = gauss_legendre_q.x[iq];
 	histo_t k = gauss_legendre_q.k;
@@ -28,7 +28,7 @@ histo_t kernel_pkcorr_A_B(size_t iq, histo_t mu, histo_t pk_k, size_t n, size_t 
 	histo_t pk_kq;
 	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
 	
-	return (*kernel)(n,a,b,k,x,kq,mu,pk_k,pk_q,pk_kq);
+	return (*kernel)(n,a,b,k,x,kq,mu,2.,pk_k,pk_q,pk_kq);
 }
 
 
@@ -39,7 +39,7 @@ histo_t calc_integ_pkcorr_A_B(size_t iq, histo_t pk_k, size_t n, size_t a, size_
 	histo_t xmin = gauss_legendre_q.x[0];
 	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
-	histo_t mumax = MIN((1.+x*x-xmin*xmin)/2./x,1.);
+	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
 	if ((mumin>=1.)||(mumax<=-1.)||(mumax<=mumin)) return 0.;
 	//if (xmax<1.) pk_k = 0.;
 	//if (x>=0.5) mumax = 0.5/x; //not symmetric q <-> k-q
@@ -48,7 +48,7 @@ histo_t calc_integ_pkcorr_A_B(size_t iq, histo_t pk_k, size_t n, size_t a, size_
 	//nodes_weights_gauss_legendre(mumin,mumax,gauss_legendre_mu.mu,gauss_legendre_mu.w,gauss_legendre_mu.nmu);
 	size_t imu,nmu=gauss_legendre_mu.nmu;
 	
-	for (imu=0;imu<nmu;imu++) integ_A_B += kernel_pkcorr_A_B(iq, gauss_legendre_mu.mu[imu], pk_k, n, a, b, kernel) * gauss_legendre_mu.w[imu];
+	for (imu=0;imu<nmu;imu++) integ_A_B += kernel_pkcorr_A_B(iq, gauss_legendre_mu.mu[imu], mumax-mumin, pk_k, n, a, b, kernel) * gauss_legendre_mu.w[imu];
 	
 	return integ_A_B;
 }

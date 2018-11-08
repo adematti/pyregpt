@@ -45,7 +45,8 @@ def test_gauss_legendre():
 	test = scipy.sum(scipy.sin(xref)*wref,axis=0)
 	
 	testing.assert_allclose(ref,test,rtol=1e-4,atol=1e-4)
-	
+
+"""	
 def test_interpol_pk_lin():
 	
 	k,pklin = load_pklin()
@@ -60,6 +61,7 @@ def test_interpol_pk_lin():
 	pk = pyregpt.interpol_pk_lin(kout)
 	ref = scipy.interp(kout,k,pklin,left=0.,right=0.)
 	testing.assert_allclose(pk,ref,rtol=1e-7,atol=1e-7)
+"""
 
 def test_find_pk_lin():
 	
@@ -218,17 +220,16 @@ def plot_pk_lin():
 	pyplot.show()
 	
 
-#test_gauss_legendre()
-#test_interpol_pk_lin()
-#test_interpol_poly()
-#test_find_pk_lin()
-#test_sigma_v2()
+test_gauss_legendre()
+test_interpol_poly()
+test_find_pk_lin()
+test_sigma_v2()
 #test_2loop(a='delta',b='theta')
-#test_all_2loop()
-#test_pad()
-#test_precision()
-#test_bias()
-#test_A_B()
-#test_copy()
+test_all_2loop()
+test_pad()
+test_precision()
+test_bias()
+test_A_B()
+test_copy()
 
-#plot_pk_lin()
+plot_pk_lin()

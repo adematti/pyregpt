@@ -88,7 +88,7 @@ typedef struct {
 
 typedef histo_t (kernel_bias)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
 
-typedef histo_t (kernel_A_B)(size_t m, size_t n, size_t a, histo_t k, histo_t x, histo_t kq, histo_t mu, histo_t pk_k, histo_t pk_q, histo_t pk_kq);
+typedef histo_t (kernel_A_B)(size_t m, size_t n, size_t a, histo_t k, histo_t x, histo_t kq, histo_t mu, histo_t dmu, histo_t pk_k, histo_t pk_q, histo_t pk_kq);
 
 TermsPkLin pk_lin;
 

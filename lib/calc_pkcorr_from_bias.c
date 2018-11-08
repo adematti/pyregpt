@@ -25,6 +25,7 @@ histo_t kernel_pkcorr_bias(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
 	histo_t pk_kq;
 	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
 	histo_t mukkq = (k*k - kq*kq - q*q)/2./q/kq;
+	//if (kq/q>10.) mukkq = 1.;
 	
 	return (*kernel)(a,q,kq,mu,mukkq,pk_q,pk_kq); 
 }
@@ -37,10 +38,11 @@ histo_t calc_integ_pkcorr_bias(FLAG a,size_t iq, kernel_bias kernel, _Bool run_h
 	histo_t xmin = gauss_legendre_q.x[0];
 	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
 	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
-	histo_t mumax = MIN((1.+x*x-xmin*xmin)/2./x,1.);
-	if ((mumin>=1.)||(mumax<=-1.)||(mumax<=mumin)) return 0.; 
+	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
+	if ((mumin>=1.)||(mumax<=-1.)||(mumax<=mumin)) return 0.;
 	if (run_half) {
 		if (x>=0.5) mumax = 0.5/x; //symmetric q <-> k-q, shorter and avoids oscillations
+		//mumax = MIN(1.,1./2./x);
 	}
 	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);
 	size_t imu,nmu=gauss_legendre_mu.nmu;
@@ -49,7 +51,6 @@ histo_t calc_integ_pkcorr_bias(FLAG a,size_t iq, kernel_bias kernel, _Bool run_h
 	if (run_half) return 2.*integ_bias;
 	
 	return integ_bias;
-
 }
 
 void set_precision_bias_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
