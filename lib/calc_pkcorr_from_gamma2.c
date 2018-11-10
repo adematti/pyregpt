@@ -16,8 +16,8 @@ histo_t gamma2_tree(FLAG a, histo_t k1, histo_t k2, histo_t k3)
 	histo_t k12 = k1*k1;
 	histo_t k22 = k2*k2;
 	histo_t k32 = k3*k3;
-	histo_t k1dk2 = (k32 - k12 - k22)/2.;
-	return F2_sym_fast(a,k12,k22,k1dk2);
+	histo_t k1k2 = (k32 - k12 - k22)/2.;
+	return F2_sym_fast(a,k12,k22,k1k2);
 }
 
 histo_t gamma2_stdPT(FLAG a, size_t n_loop, histo_t k1, histo_t k2, histo_t k3)
@@ -58,7 +58,7 @@ void kernel_pkcorr_gamma2_1loop(FLAG a,FLAG b,size_t iq, histo_t mu, histo_t *ke
 	*kernel3 = 2. * pk_q * pk_kq * gamma2a_1loop * gamma2b_1loop;        
 }
 
-void kernel_pkcorr_gamma2_tree_tree(FLAG a,FLAG b,size_t iq, histo_t mu, histo_t *kernel1)
+void kernel_pkcorr_gamma2_tree(FLAG a,FLAG b,size_t iq, histo_t mu, histo_t *kernel1)
 {
 	histo_t x = gauss_legendre_q.x[iq];
 	histo_t k = gauss_legendre_q.k;
@@ -123,23 +123,22 @@ void calc_pkcorr_from_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma
 	*pkcorr_gamma2_tree_tree = 0;
 	*pkcorr_gamma2_tree_1loop = 0.;
 	*pkcorr_gamma2_1loop_1loop = 0.;
-	histo_t integ_pkcorr1,integ_pkcorr2,integ_pkcorr3;
 	
 	for (iq=0;iq<nq;iq++) {
 	
 		histo_t x = gauss_legendre_q.x[iq];
 		if (!set_mu_range(x)) continue;
 		
-		histo_t integ_pkcorr1=0,integ_pkcorr2=0,integ_pkcorr3=0;
 		size_t imu,nmu=gauss_legendre_mu.nmu;
+		histo_t integ_pkcorr1=0,integ_pkcorr2=0,integ_pkcorr3=0;
 		
 		for (imu=0;imu<nmu;imu++) {
-			histo_t w = gauss_legendre_mu.w[imu];
 			histo_t kernel1,kernel2,kernel3;
 			kernel_pkcorr_gamma2_1loop(a, b, iq, gauss_legendre_mu.mu[imu], &kernel1, &kernel2, &kernel3);
-			integ_pkcorr1 += kernel1*w;
-			integ_pkcorr2 += kernel2*w;
-			integ_pkcorr3 += kernel3*w;
+			histo_t w = gauss_legendre_mu.w[imu];
+			integ_pkcorr1 += kernel1 * w;
+			integ_pkcorr2 += kernel2 * w;
+			integ_pkcorr3 += kernel3 * w;
 		}
 
 		histo_t x3w = x*x*x*gauss_legendre_q.w[iq];
@@ -171,10 +170,9 @@ void calc_pkcorr_from_gamma2_tree(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma2
 		size_t imu,nmu=gauss_legendre_mu.nmu;	
 	
 		for (imu=0;imu<nmu;imu++) {
-			histo_t w = gauss_legendre_mu.w[imu];
 			histo_t kernel1;
-			kernel_pkcorr_gamma2_tree_tree(a, b, iq, gauss_legendre_mu.mu[imu], &kernel1);
-			integ_pkcorr1 += kernel1*w;
+			kernel_pkcorr_gamma2_tree(a, b, iq, gauss_legendre_mu.mu[imu], &kernel1);
+			integ_pkcorr1 += kernel1*gauss_legendre_mu.w[imu];
 		}
 		
 		histo_t x3w = x*x*x*gauss_legendre_q.w[iq];

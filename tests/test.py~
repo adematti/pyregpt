@@ -102,7 +102,7 @@ def test_2loop(a='delta',b='delta'):
 	pyregpt = Spectrum2Loop()
 	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
-	"""
+	
 	ref = load_reference_gamma(a,b)[20:40]
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
@@ -110,7 +110,6 @@ def test_2loop(a='delta',b='delta'):
 		if key in ref.dtype.names:
 			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
 			print('{} {} {} ok'.format(a,b,key))
-	"""
 
 def test_pad(a='delta',b='delta'):
 	k,pklin = load_pklin()

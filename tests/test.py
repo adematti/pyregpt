@@ -105,7 +105,7 @@ def test_2loop(a='delta',b='delta'):
 	
 	ref = load_reference_gamma(a,b)[20:40]
 	pyregpt.set_terms(ref['k'])
-	pyregpt.run_terms(a,b,nthreads=nthreads)
+	pyregpt.run_terms(a,b,nthreads=1)
 	for key in pyregpt.FIELDS:
 		if key in ref.dtype.names:
 			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
