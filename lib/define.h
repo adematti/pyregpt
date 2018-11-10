@@ -45,7 +45,7 @@ typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk;
-} TermsPkLin;
+} Pk;
 
 typedef struct {
 	size_t nk;
@@ -61,6 +61,16 @@ typedef struct {
 	histo_t* pkcorr_G2_1loop_1loop;
 	histo_t* pkcorr_G3_tree;
 } Terms2Loop;
+
+typedef struct {
+	size_t nk;
+	histo_t* k;
+	histo_t* pk_lin;
+	histo_t* sigma_v2;
+	histo_t* G1a_1loop;
+	histo_t* G1b_1loop;
+	histo_t* pkcorr_G2_tree_tree;
+} Terms1Loop;
 
 typedef struct {
 	size_t nk;
@@ -86,10 +96,22 @@ typedef struct {
 	histo_t* B;
 } TermsAB;
 
-typedef histo_t (kernel_bias)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
+typedef struct {
+	size_t nk;
+	histo_t* k;
+	histo_t* pk_lin;
+	histo_t* sigma_v2;
+	histo_t* A;
+} TermsA;
 
-typedef histo_t (kernel_A_B)(size_t m, size_t n, size_t a, histo_t k, histo_t x, histo_t kq, histo_t mu, histo_t dmu, histo_t pk_k, histo_t pk_q, histo_t pk_kq);
+typedef struct {
+	size_t nk;
+	histo_t* k;
+	histo_t* pk_lin;
+	histo_t* sigma_v2;
+	histo_t* B;
+} TermsB;
 
-TermsPkLin pk_lin;
+Pk pk_lin;
 
 #endif //_REGPT_DEFINE_

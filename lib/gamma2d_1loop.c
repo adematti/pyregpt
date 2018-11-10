@@ -8,7 +8,7 @@
 #include "common.h"
 #include "kernels.h"
 
-histo_t kernel_Gamma2d_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -132,7 +132,7 @@ histo_t kernel_Gamma2d_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 	return kernel1 + kernel2 + kernel3 + kernel4 + kernel5;
 }
 
-histo_t kernel_Gamma2d_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k3[NPOWERS],q[NPOWERS],eps[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS); powers(k2_/k1_ - 1.,eps,NPOWERS);
@@ -206,7 +206,7 @@ histo_t kernel_Gamma2d_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		(6.20928e6*q[5]);
 }
 
-histo_t kernel_Gamma2d_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -237,7 +237,7 @@ histo_t kernel_Gamma2d_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		432.*k3[14])*q[2]))/(339570.*k1[6]*k2[6]*k3[4]);
 }
 
-histo_t kernel_Gamma2d_lowk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_lowk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -258,7 +258,7 @@ histo_t kernel_Gamma2d_lowk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 }
 
 
-histo_t kernel_Gamma2d_elongate(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_elongate(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k_,eps_;
 	if (k1_>k2_) {
@@ -365,7 +365,7 @@ histo_t kernel_Gamma2d_elongate(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 
 }
 
-histo_t kernel_Gamma2d_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],q[NPOWERS],eps[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(q_,q,NPOWERS); powers(k3_/k2_,eps,NPOWERS);
@@ -514,7 +514,7 @@ histo_t kernel_Gamma2d_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		(6.20928e6*k1[9]*k2[9]*q[5]);
 }
 
-histo_t kernel_Gamma2d_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2d_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -1872,55 +1872,55 @@ histo_t kernel_Gamma2d_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 }
 
 
-histo_t kernel_Gamma2d(histo_t k1,histo_t k2,histo_t k3,histo_t q)
+histo_t kernel_gamma2d(histo_t k1,histo_t k2,histo_t k3,histo_t q)
 {	
-	if ((my_abs(k1/q-1.)<1.e-3)||(my_abs(k2/q-1.)<1.e-3)||(my_abs(k3/q-1.)<1.e-3)) return kernel_Gamma2d_reg3rd(k1, k2, k3, q);
+	if ((my_abs(k1/q-1.)<1.e-3)||(my_abs(k2/q-1.)<1.e-3)||(my_abs(k3/q-1.)<1.e-3)) return kernel_gamma2d_reg3rd(k1, k2, k3, q);
 	
 	if (my_abs(k2/k1-1.)<2.e-2) {
-		if (q>10.*MAX3(k1, k2, k3)) return kernel_Gamma2d_lowk(k1, k2, k3, q);
-		if (q<0.1*MIN3(k1, k2, k3)) return kernel_Gamma2d_highk(k1, k2, k3, q);
-		return kernel_Gamma2d_reg3rd(k1, k2, k3, q);
+		if (q>10.*MAX3(k1, k2, k3)) return kernel_gamma2d_lowk(k1, k2, k3, q);
+		if (q<0.1*MIN3(k1, k2, k3)) return kernel_gamma2d_highk(k1, k2, k3, q);
+		return kernel_gamma2d_reg3rd(k1, k2, k3, q);
 	}
-	if (q<0.1*MIN3(k1, k2, k3)) return kernel_Gamma2d_highk(k1, k2, k3, q);
-	if (q>10.*MAX3(k1, k2, k3)) return kernel_Gamma2d_lowk(k1, k2, k3, q);
-	if ((q>50.*MIN(k1, k2))&&(my_abs(k1*k1-k3*k3)<q*q)) return kernel_Gamma2d_elongate(k1, k2, k3, q);
-	if ((q>100.*k3)&&(k3<10.*MIN(k1,k2))) return kernel_Gamma2d_coll(k1, k2, k3, q);
-	//if (isnan(kernel_Gamma2d_exact(k1, k2, k3, q))) printf("exact");
+	if (q<0.1*MIN3(k1, k2, k3)) return kernel_gamma2d_highk(k1, k2, k3, q);
+	if (q>10.*MAX3(k1, k2, k3)) return kernel_gamma2d_lowk(k1, k2, k3, q);
+	if ((q>50.*MIN(k1, k2))&&(my_abs(k1*k1-k3*k3)<q*q)) return kernel_gamma2d_elongate(k1, k2, k3, q);
+	if ((q>100.*k3)&&(k3<10.*MIN(k1,k2))) return kernel_gamma2d_coll(k1, k2, k3, q);
+	//if (isnan(kernel_gamma2d_exact(k1, k2, k3, q))) printf("exact");
 	//printf("exact");
-	return kernel_Gamma2d_exact(k1, k2, k3, q);
+	return kernel_gamma2d_exact(k1, k2, k3, q);
 }
 
 static GaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
 static Precision precision_q = {.n=100,.min=5e-4,.max=10.,.interpol=POLY};
 
-void set_precision_gamma2d(size_t n_,histo_t min_,histo_t max_,char* interpol_)
+void set_precision_gamma2d_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
 	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
-void init_gamma2d()
+void init_gamma2d_1loop()
 {
 	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
 }
 
-void free_gamma2d()
+void free_gamma2d_1loop()
 {
 	free_gauss_legendre_q(&gauss_legendre_q);
 }
 
-histo_t one_loop_Gamma2d(histo_t k1, histo_t k2, histo_t k3)
+histo_t gamma2d_1loop(histo_t k1, histo_t k2, histo_t k3)
 {
 	//printf("%.3f %.3f %.3f ",k1,k2,k3);
-	histo_t ss = 0.;
+	histo_t integ_gamma = 0.;
 	size_t iq,nq=gauss_legendre_q.nq;
 	for (iq=0;iq<nq;iq++) {
 		histo_t q = gauss_legendre_q.q[iq];
 		//printf("%.3f ",q);
-		ss += gauss_legendre_q.w[iq] * kernel_Gamma2d(k1, k2, k3, q) * q*q*q * gauss_legendre_q.pk[iq];
-		//if (isnan(kernel_Gamma2d(k1, k2, k3, q))) printf("%.6f %.6f %.6f %.6f\n",k1, k2, k3, q);
+		integ_gamma += gauss_legendre_q.w[iq] * kernel_gamma2d(k1, k2, k3, q) * q*q*q * gauss_legendre_q.pk[iq];
+		//if (isnan(kernel_gamma2d(k1, k2, k3, q))) printf("%.6f %.6f %.6f %.6f\n",k1, k2, k3, q);
 	}
-	return ss / (8.*M_PI*M_PI*M_PI);
+	return integ_gamma / (8.*M_PI*M_PI*M_PI);
 }
 
 #endif //_REGPT_GAMMA2D_

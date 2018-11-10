@@ -1,5 +1,5 @@
-#ifndef _REGPT_GAMMA2V_
-#define _REGPT_GAMMA2V_
+#ifndef _REGPT_gamma2t_
+#define _REGPT_gamma2t_
 #define NPOWERS 20
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 #include "common.h"
 #include "kernels.h"
 
-histo_t kernel_Gamma2v_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -51,7 +51,7 @@ histo_t kernel_Gamma2v_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		(1.55232e6*k1[8]*k2[8]*k3[4]*q[4]);
 
 	histo_t kernel2 = - (M_PI*(k1[1] - q[1])*(k1[1] - q[1])*(k1[1] + q[1])*(k1[1] + q[1])*
-		(13*k1[12] + 55*my_pow(k2[2] - k3[2],3)*q[6] - 
+		(13*k1[12] + 55*power(k2[2] - k3[2],3)*q[6] - 
 		k1[10]*(194*k2[2] + 1921*k3[2] + 649*q[2]) + 
 		k1[6]*(164*k2[6] + 801*k2[4]*k3[2] + 
 		306*k2[2]*k3[4] + 329*k3[6] - 
@@ -117,7 +117,7 @@ histo_t kernel_Gamma2v_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 	return kernel1 + kernel2 + kernel3 + kernel4 + kernel5 + kernel6;
 }
 
-histo_t kernel_Gamma2v_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k3[NPOWERS],q[NPOWERS],eps[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS); powers(k2_/k1_ - 1.,eps,NPOWERS);
@@ -128,7 +128,7 @@ histo_t kernel_Gamma2v_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		k1[6]*(-329*k3[6] + 3066*k3[4]*q[2] + 564*k3[2]*q[4]) - 
 		k1[4]*(647*k3[6]*q[2] + 1617*k3[4]*q[4] + 408*k3[2]*q[6]) + 
 		3*k1[2]*(307*k3[6]*q[4] - 4*k3[4]*q[6])))/k1[10] + 
-		8*q[1]*((8640*eps[1]*k3[4]*my_pow(-k1[2] + q[2],3))/
+		8*q[1]*((8640*eps[1]*k3[4]*power(-k1[2] + q[2],3))/
 		(k1[2]*(k1[4] - 2*k1[2]*q[2] + k3[2]*q[2] + 
 		q[4])) - (420*eps[1]*(k1[2] - q[2])*(k1[2] - q[2])*
 		(-8*k3[4] + 5*k3[2]*q[2] + 3*q[4]))/
@@ -176,7 +176,7 @@ histo_t kernel_Gamma2v_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		(-(k3[2]*q[2]) + q[4] + k1[2]*(k3[2] + q[2]) - 
 		2*k1[1]*q[1]*my_sqrt(k1[2]*k3[2] - k3[2]*q[2] + q[4])))
 		)/my_pow(k1[1]*(k1[2]*k3[2] - k3[2]*q[2] + q[4]),1.5) + 
-		(17280*k3[3]*my_pow(k1[2] - q[2],3)*
+		(17280*k3[3]*power(k1[2] - q[2],3)*
 		((1 + eps[1])*k1[6] - 3*k1[4]*q[2] + 
 		(-1 + 2*eps[1])*q[4]*(k3[2] + q[2]) + 
 		k1[2]*q[2]*((1 + 2*eps[1])*k3[2] - 
@@ -189,7 +189,7 @@ histo_t kernel_Gamma2v_iso(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		1.5))))/(6.20928e6*q[5]);
 }
 
-histo_t kernel_Gamma2v_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -203,7 +203,7 @@ histo_t kernel_Gamma2v_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		42.*k2[4])*k3[4] - (3274.*k1[4] + 6243.*k1[2]*k2[2] + 
 		3274.*k2[4])*k3[6] + 1864.*(k1[2] + k2[2])*k3[8] + 
 		288.*k3[10])*q[2] + 
-		(-14.*my_pow((k1[1] - k2[1])*(k1[1] + k2[1]),4)*(k1[2] + k2[2])*
+		(-14.*power((k1[1] - k2[1])*(k1[1] + k2[1]),4)*(k1[2] + k2[2])*
 		(48.*k1[4] + 11.*k1[2]*k2[2] + 48.*k2[4]) + 
 		7.*(112.*k1[12] + 81.*k1[8]*k2[4] - 
 		386.*k1[6]*k2[6] + 81.*k1[4]*k2[8] + 
@@ -219,7 +219,7 @@ histo_t kernel_Gamma2v_highk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		1728.*k3[14])*q[4]))/(339570.*k1[6]*k2[6]*k3[4]*q[2]);
 }
 
-histo_t kernel_Gamma2v_lowk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_lowk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -239,7 +239,7 @@ histo_t kernel_Gamma2v_lowk(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		501.*q[2])))) / (1.01871e6*k1[2]*k2[2]*q[4]);	
 }
 
-histo_t kernel_Gamma2v_elongate(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_elongate(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k_,eps_;
 	if (k1_>=k2_) {
@@ -344,7 +344,7 @@ histo_t kernel_Gamma2v_elongate(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 
 }
 
-histo_t kernel_Gamma2v_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],q[NPOWERS],eps[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(q_,q,NPOWERS); powers(k3_/k2_,eps,NPOWERS);
@@ -469,7 +469,7 @@ histo_t kernel_Gamma2v_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		153*k2[2]*q[6] + k1[2]*(306*k2[6] - 1307*k2[4]*q[2] + 
 		1284*k2[2]*q[4] + 165*q[6]))*
 		2.*my_log(my_abs((k2[1] + q[1])/(k2[1] - q[1]))) + 
-		(105*k1[10]*k2[11]*my_pow(k2[1] - q[1],6)*q[1]*my_pow(k2[1] + q[1],6)*
+		(105*k1[10]*k2[11]*power(k2[1] - q[1],6)*q[1]*power(k2[1] + q[1],6)*
 		my_sqrt(q[2]*(k1[2] - k2[2] + q[2]))*
 		(-4*k1[1]*my_sqrt(q[2]*(k1[2] - k2[2] + q[2]))*
 		(26*k1[2] + 35*(-k2[2] + q[2])) + 
@@ -479,8 +479,8 @@ histo_t kernel_Gamma2v_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		2*k1[1]*my_sqrt(q[2]*(k1[2] - k2[2] + q[2])))/
 		(2*k1[2]*q[1] - k2[2]*q[1] + q[3] - 
 		2*k1[1]*my_sqrt(q[2]*(k1[2] - k2[2] + q[2]))))))/
-		(my_pow(k1[2] - k2[2] + q[2],3)*my_pow(-(k2[2]*q[1]) + q[3],4)) + 
-		(105*k1[7]*k2[14]*my_pow(k1[1] - q[1],6)*q[1]*my_pow(k1[1] + q[1],6)*
+		(power(k1[2] - k2[2] + q[2],3)*power(-(k2[2]*q[1]) + q[3],4)) + 
+		(105*k1[7]*k2[14]*power(k1[1] - q[1],6)*q[1]*power(k1[1] + q[1],6)*
 		my_sqrt(q[2]*(-k1[2] + k2[2] + q[2]))*
 		(-4*k2[1]*my_sqrt(q[2]*(-k1[2] + k2[2] + q[2]))*
 		(-35*k1[2] + 26*k2[2] + 35*q[2]) + 
@@ -490,11 +490,11 @@ histo_t kernel_Gamma2v_coll(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		2*k2[1]*my_sqrt(q[2]*(-k1[2] + k2[2] + q[2])))/
 		(k1[2]*q[1] - 2*k2[2]*q[1] - q[3] + 
 		2*k2[1]*my_sqrt(q[2]*(-k1[2] + k2[2] + q[2]))))
-		)))/(my_pow(-k1[2] + k2[2] + q[2],3)*my_pow(-(k1[2]*q[1]) + q[3],4))))/
+		)))/(power(-k1[2] + k2[2] + q[2],3)*power(-(k1[2]*q[1]) + q[3],4))))/
 		(6.20928e6*k1[9]*k2[9]*q[5]);
 }
 
-histo_t kernel_Gamma2v_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
+histo_t kernel_gamma2t_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
 	histo_t k1[NPOWERS],k2[NPOWERS],k3[NPOWERS],q[NPOWERS];
 	powers(k1_,k1,NPOWERS); powers(k2_,k2,NPOWERS); powers(k3_,k3,NPOWERS); powers(q_,q,NPOWERS);
@@ -1737,32 +1737,32 @@ histo_t kernel_Gamma2v_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 		q[2]*(-k2[2] + k3[2] + q[2])) - 
 		(17280*k1[7]*k2[7]*k3[3]*(k1[2] - q[2])*(k1[2] - q[2])*
 		(k2[2] - q[2])*(k2[2] - q[2])*
-		my_pow(1 - my_sqrt(k1[2]*k2[2] + 
+		power(1 - my_sqrt(k1[2]*k2[2] + 
 		(-k1[2] - k2[2] + k3[2])*q[2] + q[4])/
 		(k3[1]*q[1]),2))/
 		(my_sqrt(k1[2]*(k2[2] - q[2]) + 
 		q[2]*(-k2[2] + k3[2] + q[2]))*
-		my_pow(1 + my_sqrt(k1[2]*k2[2] + 
+		power(1 + my_sqrt(k1[2]*k2[2] + 
 		(-k1[2] - k2[2] + k3[2])*q[2] + q[4])/
 		(k3[1]*q[1]),2)) + 
 		(840*k1[7]*k2[10]*(k1[2] - q[2])*(k1[2] - q[2])*
 		(-8*k3[4] + 5*k3[2]*q[2] + 3*q[4])*
-		my_pow(1 - my_sqrt(k1[2]*k3[2] - 
+		power(1 - my_sqrt(k1[2]*k3[2] - 
 		(k1[2] - k2[2] + k3[2])*q[2] + q[4])/
 		(k2[1]*q[1]),2))/
 		(my_sqrt(k3[2]*(k1[2] - q[2]) + 
 		q[2]*(-k1[2] + k2[2] + q[2]))*
-		my_pow(1 + my_sqrt(k1[2]*k3[2] - 
+		power(1 + my_sqrt(k1[2]*k3[2] - 
 		(k1[2] - k2[2] + k3[2])*q[2] + q[4])/
 		(k2[1]*q[1]),2)) + 
 		(840*k1[10]*k2[7]*(k2[2] - q[2])*(k2[2] - q[2])*
 		(-8*k3[4] + 5*k3[2]*q[2] + 3*q[4])*
-		my_pow(1 - my_sqrt(k2[2]*k3[2] - 
+		power(1 - my_sqrt(k2[2]*k3[2] - 
 		(-k1[2] + k2[2] + k3[2])*q[2] + q[4])/
 		(k1[1]*q[1]),2))/
 		(my_sqrt(k3[2]*(k2[2] - q[2]) + 
 		q[2]*(k1[2] - k2[2] + q[2]))*
-		my_pow(1 + my_sqrt(k2[2]*k3[2] - 
+		power(1 + my_sqrt(k2[2]*k3[2] - 
 		(-k1[2] + k2[2] + k3[2])*q[2] + q[4])/
 		(k1[1]*q[1]),2))))/(2.483712e7*k1[9]*k2[9]*q[5]);
 
@@ -1843,7 +1843,7 @@ histo_t kernel_Gamma2v_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 
 	size_t i;
 	histo_t kernel_poly_sum = 0.;
-	for (i=0;i<17;i++) kernel_poly_sum += kernel_poly[i]/(776160.*k1[5]*k2[5]*k3[1]*q[4]*my_pow((k1[1]+q[1])*(k2[1] + q[1])*(k3[1] + q[1]),4)*(k3[1] + q[1]));
+	for (i=0;i<17;i++) kernel_poly_sum += kernel_poly[i]/(776160.*k1[5]*k2[5]*k3[1]*q[4]*power((k1[1]+q[1])*(k2[1] + q[1])*(k3[1] + q[1]),4)*(k3[1] + q[1]));
 	histo_t kernel_beta_sum = 0.;
 	for (i=0;i<5;i++) kernel_beta_sum += kernel_beta[i];
 	
@@ -1851,50 +1851,50 @@ histo_t kernel_Gamma2v_reg3rd(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 	
 }
 
-histo_t kernel_Gamma2v(histo_t k1,histo_t k2,histo_t k3,histo_t q)
+histo_t kernel_gamma2t(histo_t k1,histo_t k2,histo_t k3,histo_t q)
 {	
-	if ((my_abs(k1/q-1.)<1.e-3)||(my_abs(k2/q-1.)<1.e-3)||(my_abs(k3/q-1.)<1.e-3)) return kernel_Gamma2v_reg3rd(k1, k2, k3, q);
+	if ((my_abs(k1/q-1.)<1.e-3)||(my_abs(k2/q-1.)<1.e-3)||(my_abs(k3/q-1.)<1.e-3)) return kernel_gamma2t_reg3rd(k1, k2, k3, q);
 	
 	if (my_abs(k2/k1-1.)<2.e-2) {
-		if (q>10.*MAX3(k1, k2, k3)) return kernel_Gamma2v_lowk(k1, k2, k3, q);
-		if (q<0.1*MIN3(k1, k2, k3)) return kernel_Gamma2v_highk(k1, k2, k3, q);
-		return kernel_Gamma2v_reg3rd(k1, k2, k3, q);
+		if (q>10.*MAX3(k1, k2, k3)) return kernel_gamma2t_lowk(k1, k2, k3, q);
+		if (q<0.1*MIN3(k1, k2, k3)) return kernel_gamma2t_highk(k1, k2, k3, q);
+		return kernel_gamma2t_reg3rd(k1, k2, k3, q);
 	}
-	if (q<0.1*MIN3(k1, k2, k3)) return kernel_Gamma2v_highk(k1, k2, k3, q);
-	if (q>10.*MAX3(k1, k2, k3)) return kernel_Gamma2v_lowk(k1, k2, k3, q);
-	if ((q>50.*MIN(k1, k2))&&(my_abs(k1*k1-k3*k3)<q*q)) return kernel_Gamma2v_elongate(k1, k2, k3, q);
-	if ((q>100.*k3)&&(k3<10.*MIN(k1,k2))) return kernel_Gamma2v_coll(k1, k2, k3, q);
-	return kernel_Gamma2v_exact(k1, k2, k3, q);
+	if (q<0.1*MIN3(k1, k2, k3)) return kernel_gamma2t_highk(k1, k2, k3, q);
+	if (q>10.*MAX3(k1, k2, k3)) return kernel_gamma2t_lowk(k1, k2, k3, q);
+	if ((q>50.*MIN(k1, k2))&&(my_abs(k1*k1-k3*k3)<q*q)) return kernel_gamma2t_elongate(k1, k2, k3, q);
+	if ((q>100.*k3)&&(k3<10.*MIN(k1,k2))) return kernel_gamma2t_coll(k1, k2, k3, q);
+	return kernel_gamma2t_exact(k1, k2, k3, q);
 }
 
 static GaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
 static Precision precision_q = {.n=100,.min=5e-4,.max=10.,.interpol=POLY};
 
-void set_precision_gamma2v(size_t n_,histo_t min_,histo_t max_,char* interpol_)
+void set_precision_gamma2t_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
 	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
-void init_gamma2v()
+void init_gamma2t_1loop()
 {
 	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
 }
 
-void free_gamma2v()
+void free_gamma2t_1loop()
 {
 	free_gauss_legendre_q(&gauss_legendre_q);
 }
 
-histo_t one_loop_Gamma2v(histo_t k1, histo_t k2, histo_t k3)
+histo_t gamma2t_1loop(histo_t k1, histo_t k2, histo_t k3)
 {
-	histo_t ss = 0.;
+	histo_t integ_gamma = 0.;
 	size_t iq,nq=gauss_legendre_q.nq;
 	for (iq=0;iq<nq;iq++) {
 		histo_t q = gauss_legendre_q.q[iq];
-		ss += gauss_legendre_q.w[iq] * kernel_Gamma2v(k1, k2, k3, q) * q*q*q * gauss_legendre_q.pk[iq];
+		integ_gamma += gauss_legendre_q.w[iq] * kernel_gamma2t(k1, k2, k3, q) * q*q*q * gauss_legendre_q.pk[iq];
 	}
-	return ss / (8.*M_PI*M_PI*M_PI);
+	return integ_gamma / (8.*M_PI*M_PI*M_PI);
 }
 
-#endif //_REGPT_GAMMA2V_
+#endif //_REGPT_gamma2t_

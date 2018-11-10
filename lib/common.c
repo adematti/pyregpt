@@ -161,39 +161,70 @@ histo_t extrapol_pk_lin(histo_t k)
 }
 */
 
+histo_t extrapol_pk(Pk pkin,histo_t k)
+{
+	size_t ik;
+	size_t end=pkin.nk-1;
+	size_t start=MAX(1,((long) end)-15);	
+	histo_t dlnp_dlnk = 0.;
+	for (ik=start;ik<end;ik++) dlnp_dlnk += my_log(pkin.pk[ik+1]/pkin.pk[ik-1])/my_log(pkin.k[ik+1]/pkin.k[ik-1]);
+	histo_t n_eff = dlnp_dlnk/((histo_t) (end-start));
+	return pkin.pk[end]*my_pow((k/pkin.k[end]),n_eff);
+}
 
 histo_t extrapol_pk_lin(histo_t k)
 {
-	size_t ik;
-	size_t end=pk_lin.nk-1;
-	size_t start=MAX(1,((long) end)-15);	
-	histo_t dlnp_dlnk = 0.;
-	for (ik=start;ik<end;ik++) dlnp_dlnk += my_log(pk_lin.pk[ik+1]/pk_lin.pk[ik-1])/my_log(pk_lin.k[ik+1]/pk_lin.k[ik-1]);
-	histo_t n_eff = dlnp_dlnk/((histo_t) (end-start));
-	return pk_lin.pk[end]*my_pow((k/pk_lin.k[end]),n_eff);
+	extrapol_pk(pk_lin,k);
 }
 
-
-void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
+void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 {
 	size_t ik;
 	size_t start=0;
-	size_t end=pk_lin.nk-1;
-	histo_t kstart = pk_lin.k[start];
-	histo_t kend = pk_lin.k[end];
+	size_t end=pkin.nk-1;
+	histo_t kstart = pkin.k[start];
+	histo_t kend = pkin.k[end];
 	for (ik=0;ik<nk;ik++) {
-		if (k[ik]>kend) pk[ik] = extrapol_pk_lin(k[ik]);
+		if (k[ik]>kend) pk[ik] = extrapol_pk(pkin,k[ik]);
 		//else if (k[ik]<kstart) pk[ik] = 0.;
 		else {
-			size_t ind = get_dichotomy_index(k[ik],pk_lin.k,start,end+1);
+			size_t ind = get_dichotomy_index(k[ik],pkin.k,start,end+1);
 			start = ind;
 			if (interpol==POLY) {
 				size_t ikmin = MAX(0,((long) ind)-2);
 				size_t ikmax = MIN(end,ind+2);
-				pk[ik] = interpol_poly(k[ik],&(pk_lin.k[ikmin]),&(pk_lin.pk[ikmin]),ikmax-ikmin+1);
+				pk[ik] = interpol_poly(k[ik],&(pkin.k[ikmin]),&(pkin.pk[ikmin]),ikmax-ikmin+1);
 			}
-			else pk[ik] = interpol_lin(k[ik],pk_lin.k[ind],pk_lin.k[ind+1],pk_lin.pk[ind],pk_lin.pk[ind+1]);
+			else pk[ik] = interpol_lin(k[ik],pkin.k[ind],pkin.k[ind+1],pkin.pk[ind],pkin.pk[ind+1]);
 		}
+	}
+}
+
+void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
+{
+	find_pk(pk_lin,k,pk,nk,interpol);
+}
+
+void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk,histo_t uvcutoff)
+{
+	//sigmav^2 = int_0^{k/2} dq P0(q)/(6*pi^2)
+	size_t ik,iklin = 0;
+	histo_t sigmav2_ = 0.;
+	for (ik=0;ik<nk;ik++) {
+		histo_t kmax = k[ik]*uvcutoff;
+		if (kmax < pk_lin.k[0]) {
+			sigmav2[ik] = 0.;
+			continue;
+		}
+		for (iklin=iklin;iklin<pk_lin.nk-1;iklin++) {
+			if (kmax < pk_lin.k[iklin+1]) {
+				histo_t pk_kmax = interpol_lin(kmax,pk_lin.k[iklin],pk_lin.k[iklin+1],pk_lin.pk[iklin],pk_lin.pk[iklin+1]);
+				sigmav2[ik] = (sigmav2_ + (pk_kmax + pk_lin.pk[iklin]) * (kmax - pk_lin.k[iklin]))/(12.*M_PI*M_PI);
+				break;
+			}
+			else sigmav2_ += (pk_lin.pk[iklin+1] + pk_lin.pk[iklin]) * (pk_lin.k[iklin+1] - pk_lin.k[iklin]);
+		}
+		if (iklin==pk_lin.nk-1) sigmav2[ik] = sigmav2_/(12.*M_PI*M_PI);
 	}
 }
 
@@ -423,20 +454,6 @@ void write_gauss_legendre_mu(GaussLegendreMu gauss_legendre,char *fn)
 	fr=fopen(fn,"w");
 	if (fr==NULL) error_open_file(fn);
 	for (imu=0;imu<nmu;imu++) fprintf(fr,"%f %f %f\n",gauss_legendre.mu[imu],gauss_legendre.w[imu]);
-	fclose(fr);
-}
-
-void write_2loop(Terms2Loop terms_2loop,char *fn)
-{
-	//////
-	// Writes 2-loop terms into file fn, only used for debugging
-	FILE *fr;
-	size_t ik;
-	fr=fopen(fn,"w");
-	if(fr==NULL) error_open_file(fn);
-	for(ik=0;ik<terms_2loop.nk;ik++) {
-		fprintf(fr,"%f %f %f %f %f %f %f %f %f\n",terms_2loop.k[ik],terms_2loop.G1a_1loop[ik],terms_2loop.G1a_2loop[ik],terms_2loop.G1b_1loop[ik],terms_2loop.G1b_2loop[ik],terms_2loop.pkcorr_G2_tree_tree[ik],terms_2loop.pkcorr_G2_tree_1loop[ik],terms_2loop.pkcorr_G2_1loop_1loop[ik],terms_2loop.pkcorr_G3_tree[ik]);
-	}
 	fclose(fr);
 }
 

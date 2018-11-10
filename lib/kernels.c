@@ -5,22 +5,24 @@
 #include "common.h"
 #include "kernels.h"
 
-histo_t F2_sym(FLAG a, histo_t p2, histo_t q2, histo_t pq)
+histo_t F2_sym_fast(FLAG a, histo_t p2, histo_t q2, histo_t pq)
 {
 	if (a==DELTA) return 5./7. + 0.5*pq*(1/p2 + 1/q2) + 2./7.*pq*pq/p2/q2;
 	return 3./7. + 0.5*pq*(1/p2 + 1/q2) + 4./7.*pq*pq/p2/q2;
 }
 
-histo_t F2_sym_full(FLAG a, histo_t p, histo_t q, histo_t mu)
+histo_t F2_sym_full(FLAG a, histo_t *p, histo_t *q)
+{
+	histo_t pp = p[0]*p[0]+p[1]*p[1]+p[2]*p[2];
+    histo_t qq = q[0]*q[0]+q[1]*q[1]+q[2]*q[2];
+	histo_t pq = p[0]*q[0]+p[1]*q[1]+p[2]*q[2]; 
+    return F2_sym_fast(a,pp,qq,pq);
+}
+
+histo_t F2_sym(FLAG a, histo_t p, histo_t q, histo_t mu)
 {
 	if (a==DELTA) return 5./7. + 0.5*mu*(q/p + p/q) + 2./7.*mu*mu;
 	return 3./7. + 0.5*mu*(q/p + p/q) + 4./7.*mu*mu;
-}
-
-histo_t F2_sym_full_bis(FLAG a, histo_t p, histo_t q, histo_t mu)
-{
-	if (a==DELTA) return mu*(q/p + p/q);
-	return mu*(q/p + p/q);
 }
 
 histo_t S2(histo_t mu)
@@ -94,134 +96,41 @@ histo_t big_beta(histo_t k1,histo_t k2,histo_t k3,histo_t q)
 	return x*betafunc(2,1.-y1*y1/(1.+y)/(1.+y))/(a*y);
 }
 
-
-histo_t kernel_b2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t sigmaab(size_t n,size_t a,size_t b)
 {
-	return pk_q * pk_kq * F2_sym_full(a,q,kq,mukkq);
-	//return 2 * pk_q * pk_kq * F2_sym(a,q*q,kq*kq,mukkq*q*kq)*F2_sym(a,q*q,kq*kq,mukkq*q*kq);
-	//return pk_q * pk_kq * F2_sym(a,q*q,kq*kq,mukkq*q*kq);
+	histo_t sab = 0.;
+	histo_t nf = (histo_t) n;
+	if ((a==1)&&(b==1)) sab = 2.*nf + 1.;
+	else if ((a==1)&&(b==2)) sab = 2.;
+	else if ((a==2)&&(b==1)) sab = 3.;
+	else if ((a==2)&&(b==2)) sab = 2.*nf;
+	return sab / (2.*nf + 3.) / (nf - 1.);
 }
 
-histo_t kernel_bs2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t F3(FLAG a_, histo_t* p, histo_t* q, histo_t* r)
 {
-	return pk_q * pk_kq * F2_sym(a,q*q,kq*kq,mukkq*q*kq) * S2(mukkq);
-}
+	size_t a = (a_==DELTA) ? 1:2;
+	histo_t qr[3];
+	qr[0] = q[0] + r[0];
+	qr[1] = q[1] + r[1];
+	qr[2] = q[2] + r[2];
+	if (((my_abs(qr[0])<EPS)&&(my_abs(qr[1])<EPS)&&(my_abs(qr[2])<EPS))
+		||((my_abs(p[0]+qr[0])<EPS)&&(my_abs(p[1]+qr[1])<EPS)&&(my_abs(p[2]+qr[2])<EPS))) return 0.;
 
-histo_t kernel_b22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return 0.5 * pk_q * (pk_kq - pk_q);
-}
-
-histo_t kernel_b2s2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return -0.5 * pk_q * (2./3. * pk_q - pk_kq * S2(mukkq));
-}
-
-histo_t kernel_bs22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	histo_t s2 = S2(mukkq);
-	return -0.5 * pk_q * (4./9. * pk_q - pk_kq * s2*s2);
-}
-
-histo_t kernel_sigma3sq(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return 105./16. * pk_q * (D2(mu)*S2(mukkq) + 8./63.);
-}
-
-
-histo_t A_mat(size_t m,size_t n,histo_t* r,histo_t* x)
-{
-	if ((m==1)&&(n==1)) return -r[3]/7.*(x[1]+6*x[3]+r[2]*x[1]*(-3+10*x[2])+r[1]*(-3+x[2]-12*x[4]));
-	if (((m==1)&&(n==2))||((m==2)&&(n==3))) return r[4]/14.*(x[2]-1)*(-1+7*r[1]*x[1]-6*x[2]);
-	if ((m==2)&&(n==2)) return r[3]/14.*(r[2]*x[1]*(13-41*x[2])-4*(x[1]+6*x[3])+r[1]*(5+9*x[2]+42*x[4]));
-	if ((m==3)&&(n==3)) return r[3]/14.*(1-7*r[1]*x[1]+6*x[2])*(-2*x[1]+r[1]*(-1+3*x[2]));
-	return 0.;
-}
-
-histo_t Atilde_mat(size_t m,size_t n,histo_t* r,histo_t* x)
-{
-	if ((m==1)&&(n==1)) return 1./7.*(x[1]+r[1]-2*r[1]*x[2])*(3*r[1]+7*x[1]-10*r[1]*x[2]);
-	if ((m==1)&&(n==2)) return r[1]/14.*(x[2]-1)*(3*r[1]+7*x[1]-10*r[1]*x[2]);
-	if ((m==2)&&(n==2)) return 1./14.*(28*x[2]+r[1]*x[1]*(25-81*x[2])+r[2]*(1-27*x[2]+54*x[4]));
-	if ((m==2)&&(n==3)) return r[1]/14.*(1-x[2])*(r[1]-7*x[1]+6*r[1]*x[2]);
-	if ((m==3)&&(n==3)) return 1./14.*(r[1]-7*x[1]+6*r[1]*x[2])*(-2*x[1]-r[1]+3*r[1]*x[2]);
-	return 0.;
-}
-/*
-histo_t a_mat(size_t m,size_t n,histo_t* r)
-{
-	histo_t logr = my_log(my_abs((r[1] + 1)/(r[1] - 1)));
-	
-	if ((m==1)&&(n==1)) return -1./84./r[1]*(2*r[1]*(19-24*r[2]+9*r[4])-9*power(r[2]-1,3)*logr);
-	if (((m==1)&&(n==2))||((m==2)&&(n==3))) return 1./112./r[3]*(2*r[1]*(r[2]+1)*(3-14*r[2]+3*r[4])-3*power(r[2]-1,4)*logr);
-	if ((m==2)&&(n==2)) return 1./336./r[3]*(2*r[1]*(9-185*r[2]+159*r[4]-63*r[6])+9*power(r[2]-1,3)*(7*r[2]+1)*logr);
-	if ((m==3)&&(n==3)) return 1./336./r[3]*(2*r[1]*(9-109*r[2]+63*r[4]-27*r[6])+9*power(r[2]-1,3)*(3*r[2]+1)*logr);
-
-	return 0.;
-}
-*/
-
-histo_t a_mat(size_t m,size_t n,histo_t* r)
-{
-	if (r[1]<1e-4) {
-		if ((m==1)&&(n==1)) return 8*r[8]/735 + 24*r[6]/245 - 24*r[4]/35 + 8*r[2]/7 - 2./3;
-		if (((m==1)&&(n==2))||((m==2)&&(n==3))) return -16*r[8]/8085 - 16*r[6]/735 + 48*r[4]/245 - 16*r[2]/35;
-		if ((m==2)&&(n==2)) return 32*r[8]/1617 + 128*r[6]/735 - 288*r[4]/245 + 64*r[2]/35 - 4./3;
-		if ((m==3)&&(n==3)) return 24*r[8]/2695 + 8*r[6]/105 - 24*r[4]/49 + 24*r[2]/35 - 2./3;
-	}
-	else if (r[1]>1e2) {
-		if ((m==1)&&(n==1)) return 2./105 - 24/(245*r[2]) - 8/(735*r[4]) - 8/(2695*r[6]) - 8/(7007*r[8]);
-		if (((m==1)&&(n==2))||((m==2)&&(n==3))) return -16./35 + 48/(245*r[2]) - 16/(735*r[4]) - 16/(8085*r[6]) - 16/(35035*r[8]);
-		if ((m==2)&&(n==2)) return -44./105 - 32/(735*r[4]) - 64/(8085*r[6]) - 96/(35035*r[8]);
-		if ((m==3)&&(n==3)) return -46./105 + 24/(245*r[2]) - 8/(245*r[4]) - 8/(1617*r[6]) - 8/(5005*r[8]);
-	}
-	else {
-		histo_t logr = 0.;
-		if (my_abs(r[1]-1)>EPS) logr = my_log(my_abs((r[1] + 1)/(r[1] - 1)));
-	
-		if ((m==1)&&(n==1)) return -1./84./r[1]*(2*r[1]*(19-24*r[2]+9*r[4])-9*power(r[2]-1,3)*logr);
-		if (((m==1)&&(n==2))||((m==2)&&(n==3))) return 1./112./r[3]*(2*r[1]*(r[2]+1)*(3-14*r[2]+3*r[4])-3*power(r[2]-1,4)*logr);
-		if ((m==2)&&(n==2)) return 1./336./r[3]*(2*r[1]*(9-185*r[2]+159*r[4]-63*r[6])+9*power(r[2]-1,3)*(7*r[2]+1)*logr);
-		if ((m==3)&&(n==3)) return 1./336./r[3]*(2*r[1]*(9-109*r[2]+63*r[4]-27*r[6])+9*power(r[2]-1,3)*(3*r[2]+1)*logr);
-	}
-	return 0.;
+	histo_t pp = p[0]*p[0] + p[1]*p[1] + p[2]*p[2];
+	histo_t qrqr = qr[0]*qr[0] + qr[1]*qr[1] + qr[2]*qr[2];
+	histo_t pqr = p[0]*qr[0] + p[1]*qr[1] + p[2]*qr[2];
+	histo_t gam_112 = (1. + pqr / qrqr)/2.;
+	histo_t gam_222 = pqr*(pp+qrqr+2.*pqr)/(pp*qrqr)/2.;
+	histo_t gam_121 = (1. + pqr / pp)/2.;
+	histo_t qq = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
+	histo_t rr = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
+	histo_t mu = q[0]*r[0] + q[1]*r[1] + q[2]*r[2];
+	return 2*((sigmaab(3,a,1) * gam_112 + sigmaab(3,a,2) * gam_222) * F2_sym_fast(THETA,qq,rr,mu) + sigmaab(3,a,1) * gam_121 * F2_sym_fast(DELTA,qq,rr,mu));
 }
 
 
-
-histo_t B_mat(size_t n,size_t a,size_t b,histo_t* r,histo_t* x)
+histo_t F3_sym(FLAG a, histo_t* p, histo_t* q, histo_t* r)
 {
-	//n=1	
-	if ((n==1)&&(a==1)&&(b==1)) return r[2]/2.*(x[2]-1);
-	if ((n==1)&&(a==1)&&(b==2)) return 3*r[2]/8.*power(x[2]-1,2);
-	if ((n==1)&&(a==2)&&(b==1)) return 3*r[4]/8.*power(x[2]-1,2);
-	if ((n==1)&&(a==2)&&(b==2)) return 5*r[4]/16.*power(x[2]-1,3);
-	//n=2
-	if ((n==2)&&(a==1)&&(b==1)) return r[1]/2.*(r[1]+2*x[1]-3*r[1]*x[2]);
-	if ((n==2)&&(a==1)&&(b==2)) return -3*r[1]/4.*(x[2]-1)*(-r[1]-2*x[1]+5*r[1]*x[2]);
-	if ((n==2)&&(a==2)&&(b==1)) return 3*r[2]/4.*(x[2]-1)*(-2+r[2]+6*r[1]*x[1]-5*r[2]*x[2]);
-	if ((n==2)&&(a==2)&&(b==2)) return -3*r[2]/16.*power(x[2]-1,2)*(6-30*r[1]*x[1]-5*r[2]+35*r[2]*x[2]);
-	//n=3
-	if ((n==3)&&(a==1)&&(b==2)) return r[1]/8.*(4*x[1]*(3-5*x[2])+r[1]*(3-30*x[2]+35*x[4]));
-	if ((n==3)&&(a==2)&&(b==1)) return r[1]/8.*(-8*x[1]+r[1]*(-12+36*x[2]+12*r[1]*x[1]*(3-5*x[2])+r[2]*(3-30*x[2]+35*x[4])));
-	if ((n==3)&&(a==2)&&(b==2)) return 3*r[1]/16.*(x[2]-1)*(-8*x[1]+r[1]*(-12+60*x[2]+20*r[1]*x[1]*(3-7*x[2])+5*r[2]*(1-14*x[2]+21*x[4])));
-	//n=4
-	if ((n==4)&&(a==2)&&(b==2)) return r[1]/16.*(8*x[1]*(-3+5*x[2])-6*r[1]*(3-30*x[2]+35*x[4])+6*r[2]*x[1]*(15-70*x[2]+63*x[4])+r[3]*(5-21*x[2]*(5-15*x[2]+11*x[4])));
-	return 0.;
-}
-
-histo_t kernel_A(size_t m, size_t n, size_t a, histo_t k, histo_t x_, histo_t kq, histo_t mu_, histo_t dmu_, histo_t pk_k, histo_t pk_q, histo_t pk_kq)
-{
-	//Taruya 2010 (arXiv 1006.0699v1) eq A3
-	histo_t x[9],mu[5];
-	powers(x_,x,9); powers(mu_,mu,5);
-	return (A_mat(m,n,x,mu) * pk_k + Atilde_mat(m,n,x,mu) * pk_q) * pk_kq / power(kq/k,4) + 1./dmu_ * a_mat(m,n,x) * pk_k * pk_q;
-}
-
-histo_t kernel_B(size_t n, size_t a, size_t b, histo_t k, histo_t x_, histo_t kq, histo_t mu_, histo_t dmu_, histo_t pk_k, histo_t pk_q, histo_t pk_kq)
-{
-	//Taruya 2010 (arXiv 1006.0699v1) eq A4
-	histo_t x[5],mu[5];
-	powers(x_,x,5); powers(mu_,mu,5); 
-	return B_mat(n,a,b,x,mu) * pk_kq * pk_q / power(kq/k,2*a);
+	return (F3(a, p, q, r) + F3(a, r, p, q) + F3(a, q, r, p))/3.;
 }

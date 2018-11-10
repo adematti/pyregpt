@@ -5,128 +5,16 @@
 #include "common.h"
 #include "kernels.h"
 
-histo_t F2_sym(FLAG a, histo_t p2, histo_t q2, histo_t pq)
-{
-	if (a==DELTA) return 5./7. + 0.5*pq*(1/p2 + 1/q2) + 2./7.*pq*pq/p2/q2;
-	return 3./7. + 0.5*pq*(1/p2 + 1/q2) + 4./7.*pq*pq/p2/q2;
-}
+static GaussLegendreQ gauss_legendre_q;
+static GaussLegendreMu gauss_legendre_mu;
+#pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
+static Precision precision_q = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
+static Precision precision_mu = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
+static const size_t INDEX_A[5][2] = {{0,0},{0,1},{1,1},{1,2},{2,2}};
+static const size_t INDEX_B[12][3] = {{0,0,0},{0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{1,1,1},{2,0,1},{2,1,0},{2,1,1},{3,1,1}};
+static const size_t SHAPE_A[2] = {3,3};
+static const size_t SHAPE_B[2] = {4,3};
 
-histo_t F2_sym_full(FLAG a, histo_t p, histo_t q, histo_t mu)
-{
-	if (a==DELTA) return 5./7. + 0.5*mu*(q/p + p/q) + 2./7.*mu*mu;
-	return 3./7. + 0.5*mu*(q/p + p/q) + 4./7.*mu*mu;
-}
-
-histo_t F2_sym_full_bis(FLAG a, histo_t p, histo_t q, histo_t mu)
-{
-	if (a==DELTA) return mu*(q/p + p/q);
-	return mu*(q/p + p/q);
-}
-
-histo_t S2(histo_t mu)
-{
-	return mu*mu-1./3.;
-}
-
-histo_t D2(histo_t mu)
-{
-	return 2./7.*(S2(mu)-2./3.);
-}
-
-histo_t LFunc(histo_t k, histo_t q)
-{
-	//return my_log((k + q)*(k + q)/(k - q)/(k - q));
-	return 2.*my_log(my_abs((k + q)/(k - q)));
-}
-
-histo_t WFunc(histo_t k1, histo_t k2, histo_t k3, histo_t q)
-{
-	histo_t k12 = k1*k1;
-	histo_t k22 = k2*k2;
-	histo_t k32 = k3*k3;
-	histo_t q2 = q*q;
-	histo_t aa = -4.*k32*q2 - 2.*(k12 - q2)*(k22 - q2);
-	histo_t bb = 4.*k3*q*my_sqrt(k12*k22 + (-k12 - k22 + k32)*q2 + q2*q2);
-	
-	//if (isnan(my_log((aa-bb)/(aa+bb)))) printf("%.3lf %.3lf %.3lf %.3lf %.3lf %.3lf\n",k1,k2,k3,q,aa,k12*k22 + (-k12 - k22 + k32)*q2 + q2*q2);
-	
-	return my_log((aa-bb)/(aa+bb));
-}
-
-histo_t betafunc(size_t a,histo_t z)
-{
-	histo_t z2 = z*z;
-	histo_t z3 = z2*z;
-	histo_t z4 = z3*z;
-	if (z<=0.1) {
-		histo_t fa = (histo_t) a;
-		histo_t z5 = z4*z;
-		histo_t z6 = z5*z;
-		return power(z,a)*(1./fa + z/(1. + fa) + z2/(2. + fa) + z3/(3. + fa) + z4/(4. + fa) + z5/(5. + fa) + z6/(6. + fa));
-	}
-	if (a==2) return z2*(-2./z - 2.*my_log(1. - z)/z2)/2.;
-	if (a==4) return z4*(-2.*(6. + 3.*z + 2.*z2)/(3.*z3) - 4.*my_log(1. - z)/z4)/4.;
-	if (a==6) {
-		histo_t z5 = z4*z;
-		histo_t z6 = z5*z;
-		return z6*((-60. - 30.*z - 20.*z2 - 15.*z3 - 12.*z4)/(10.*z5) - 6.*my_log(1. - z)/z6)/6.;
-	}
-	return 0.;
-}
-
-histo_t small_beta(histo_t k, histo_t q)
-{
-	histo_t y = (k - q) / (k + q);
-	if (my_abs(y) <= 1.e-6) return 0.;
-	//if (my_abs(betafunc(4, 1. - y*y))>1e6) printf("small ");
-    return y * betafunc(4, 1. - y*y); 
-}
-
-histo_t big_beta(histo_t k1,histo_t k2,histo_t k3,histo_t q)
-{
-	histo_t x = (k1*k1-q*q) * (k2*k2-q*q);
-	histo_t a = k3 * q;
-	histo_t y = my_sqrt(x+a*a)/a;
-	histo_t y1 = my_abs(y-1);
-	if (y1<=1.e-5) return 0.;
-	if (y1<=1.e-2) return 2.*a*(-1. + y)*(-1. + my_log(4.) - 2.*my_log(y1)) + a*y1*y1*(3.-my_log(4.) + 2.*my_log(y1));
-	//if (betafunc(2,1.-y1*y1/(1.+y)/(1.+y))/(a*y)>1e6) printf("big ");
-	return x*betafunc(2,1.-y1*y1/(1.+y)/(1.+y))/(a*y);
-}
-
-
-histo_t kernel_b2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return pk_q * pk_kq * F2_sym_full_bis(a,q,kq,mukkq);
-	//return 2 * pk_q * pk_kq * F2_sym(a,q*q,kq*kq,mukkq*q*kq)*F2_sym(a,q*q,kq*kq,mukkq*q*kq);
-	//return pk_q * pk_kq * F2_sym(a,q*q,kq*kq,mukkq*q*kq);
-}
-
-histo_t kernel_bs2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return pk_q * pk_kq * F2_sym(a,q*q,kq*kq,mukkq*q*kq) * S2(mukkq);
-}
-
-histo_t kernel_b22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return 0.5 * pk_q * (pk_kq - pk_q);
-}
-
-histo_t kernel_b2s2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return -0.5 * pk_q * (2./3. * pk_q - pk_kq * S2(mukkq));
-}
-
-histo_t kernel_bs22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	histo_t s2 = S2(mukkq);
-	return -0.5 * pk_q * (4./9. * pk_q - pk_kq * s2*s2);
-}
-
-histo_t kernel_sigma3sq(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
-{
-	return 105./16. * pk_q * (D2(mu)*S2(mukkq) + 8./63.);
-}
 
 
 histo_t A_mat(size_t m,size_t n,histo_t* r,histo_t* x)
@@ -187,8 +75,6 @@ histo_t a_mat(size_t m,size_t n,histo_t* r)
 	return 0.;
 }
 
-
-
 histo_t B_mat(size_t n,size_t a,size_t b,histo_t* r,histo_t* x)
 {
 	//n=1	
@@ -225,3 +111,109 @@ histo_t kernel_B(size_t n, size_t a, size_t b, histo_t k, histo_t x_, histo_t kq
 	powers(x_,x,5); powers(mu_,mu,5); 
 	return B_mat(n,a,b,x,mu) * pk_kq * pk_q / power(kq/k,2*a);
 }
+
+
+histo_t kernel_pkcorr_A_B(size_t iq, size_t imu, histo_t pk_k, size_t n, size_t a, size_t b, kernel_A_B kernel)
+{
+	histo_t x = gauss_legendre_q.x[iq];
+	histo_t k = gauss_legendre_q.k;
+	histo_t q = gauss_legendre_q.q[iq];
+	histo_t mu = gauss_legendre_mu.mu[imu];
+	histo_t kq = gauss_legendre_q.k*my_sqrt(1.+x*x-2.*mu*x);
+	histo_t pk_q = gauss_legendre_q.pk[iq];
+	histo_t pk_kq;
+	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
+	
+	return (*kernel)(n,a,b,k,x,kq,mu,2.,pk_k,pk_q,pk_kq);
+}
+
+
+void set_precision_A_B_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
+{
+	set_precision(&precision_q,n_,min_,max_,interpol_);
+}
+
+void set_precision_A_B_mu(size_t n_,char* interpol_)
+{
+	set_precision(&precision_mu,n_,-1.,1.,interpol_);
+}
+
+void init_A_B()
+{
+	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
+	init_gauss_legendre_mu(&gauss_legendre_mu,&precision_mu);
+}
+
+
+void free_A_B()
+{
+	free_gauss_legendre_q(&gauss_legendre_q);
+	free_gauss_legendre_mu(&gauss_legendre_mu);
+}
+
+_Bool set_mu_range(histo_t x)
+{
+	histo_t xmin = gauss_legendre_q.x[0];
+	histo_t xmax = gauss_legendre_q.x[gauss_legendre_q.nq-1];
+	histo_t mumin = MAX(-1.,(1.+x*x-xmax*xmax)/2./x);
+	histo_t mumax = MIN(1.,(1.+x*x-xmin*xmin)/2./x);
+	if ((mumin>=1.)||(mumax<=-1.)||(mumax<=mumin)) return 0;
+	update_gauss_legendre_mu(&gauss_legendre_mu,mumin,mumax);
+	return 1;
+}
+
+void calc_pkcorr_from_A(histo_t k, histo_t pk_k, histo_t* A)
+{
+
+	update_gauss_legendre_q(&gauss_legendre_q,k);
+	
+	size_t iq,nq=gauss_legendre_q.nq;
+	for (ii=0;ii<SHAPE_A[0]*SHAPE_A[1];ii++) A[ii] = 0.;
+	
+	for (iq=0;iq<nq;iq++) {
+		histo_t x = gauss_legendre_q.x[iq];
+		if (!set_mu_range(x)) continue;
+		
+		size_t imu,nmu=gauss_legendre_mu.nmu;
+		histo_t xw = gauss_legendre_q.x[iq]*gauss_legendre_q.w[iq];
+		for (ii=0;ii<5;ii++) {
+			size_t m = INDEX_A[ii][0];
+			size_t n = INDEX_A[ii][1];
+			histo_t integ_A;
+			for (imu=0;imu<nmu;imu++) integ_A += kernel_pkcorr_A_B(iq, imu, pk_k, m+1, n+1, 0, kernel_A) * gauss_legendre_mu.w[imu];
+			A[m*SHAPE_A[1]+n] += integ_A * xw;
+		}
+	}
+
+	for (ii=0;ii<SHAPE_A[0]*SHAPE_A[1];ii++) A[ii] *= k*k*k / (4.*M_PI*M_PI);
+
+}
+
+void calc_pkcorr_from_B(histo_t k, histo_t* B)
+{
+
+	update_gauss_legendre_q(&gauss_legendre_q,k);
+	
+	size_t iq,nq=gauss_legendre_q.nq;
+	for (ii=0;ii<SHAPE_B[0]*SHAPE_B[1];ii++) B[ii] = 0.;
+	
+	for (iq=0;iq<nq;iq++) {
+		histo_t x = gauss_legendre_q.x[iq];
+		if (!set_mu_range(x)) continue;
+		
+		size_t imu,nmu=gauss_legendre_mu.nmu;
+		histo_t xw = gauss_legendre_q.x[iq]*gauss_legendre_q.w[iq];
+		for (ii=0;ii<12;ii++) {
+			size_t n = INDEX_B[ii][0];
+			size_t a = INDEX_B[ii][1];
+			size_t b = INDEX_B[ii][2];
+			histo_t integ_B;
+			for (imu=0;imu<nmu;imu++) integ_B += kernel_pkcorr_B_B(iq, imu, 0., n+1, a+1, b+1, kernel_B) * gauss_legendre_mu.w[imu];
+			B[n*SHAPE_B[1]+a+b] += integ_B * xw;
+		}
+	}
+
+	for (ii=0;ii<SHAPE_B[0]*SHAPE_B[1];ii++) B[ii] *= k*k*k / (4.*M_PI*M_PI);
+
+}
+
