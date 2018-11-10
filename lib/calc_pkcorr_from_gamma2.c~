@@ -126,7 +126,6 @@ void calc_pkcorr_from_gamma2(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_G2_tree_tre
 		histo_t x = gauss_legendre_q.x[iq];
 		histo_t x3w = x*x*x*gauss_legendre_q.w[iq];
 		calc_integ_pkcorr_G2(a, b, iq, &integ_pkcorr1, &integ_pkcorr2, &integ_pkcorr3);
-		printf("%.3f ",integ_pkcorr1);
  		*pkcorr_G2_tree_tree += integ_pkcorr1 * x3w;
 		*pkcorr_G2_tree_1loop += integ_pkcorr2 * x3w;
 		*pkcorr_G2_1loop_1loop += integ_pkcorr3 * x3w;

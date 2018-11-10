@@ -45,7 +45,8 @@ def test_gauss_legendre():
 	test = scipy.sum(scipy.sin(xref)*wref,axis=0)
 	
 	testing.assert_allclose(ref,test,rtol=1e-4,atol=1e-4)
-	
+
+"""	
 def test_interpol_pk_lin():
 	
 	k,pklin = load_pklin()
@@ -60,6 +61,7 @@ def test_interpol_pk_lin():
 	pk = pyregpt.interpol_pk_lin(kout)
 	ref = scipy.interp(kout,k,pklin,left=0.,right=0.)
 	testing.assert_allclose(pk,ref,rtol=1e-7,atol=1e-7)
+"""
 
 def test_find_pk_lin():
 	
@@ -101,7 +103,7 @@ def test_2loop(a='delta',b='delta'):
 	pyregpt = PyRegPT()
 	pyregpt.set_precision(calculation='2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_gamma(a,b)[20:40]
+	ref = load_reference_gamma(a,b)[20:21]
 	pyregpt.set_k_2loop(ref['k'])
 	pyregpt.run_2loop(a,b,nthreads=nthreads)
 	for key in pyregpt.terms_2loop.FIELDS:
@@ -218,8 +220,10 @@ def plot_pk_lin():
 	pyplot.show()
 	
 
+test_2loop(a='delta',b='theta')
+
+"""
 test_gauss_legendre()
-test_interpol_pk_lin()
 test_interpol_poly()
 test_find_pk_lin()
 test_sigma_v2()
@@ -232,3 +236,4 @@ test_A_B()
 test_copy()
 
 plot_pk_lin()
+"""

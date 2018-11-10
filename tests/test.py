@@ -103,9 +103,9 @@ def test_2loop(a='delta',b='delta'):
 	pyregpt = PyRegPT()
 	pyregpt.set_precision(calculation='2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_gamma(a,b)[20:40]
+	ref = load_reference_gamma(a,b)[20:21]
 	pyregpt.set_k_2loop(ref['k'])
-	pyregpt.run_2loop(a,b,nthreads=nthreads)
+	pyregpt.run_2loop(a,b,nthreads=1)
 	for key in pyregpt.terms_2loop.FIELDS:
 		if key in ref.dtype.names:
 			testing.assert_allclose(pyregpt.terms_2loop[key],ref[key],rtol=1e-6,atol=1e-7)
@@ -220,6 +220,9 @@ def plot_pk_lin():
 	pyplot.show()
 	
 
+test_2loop(a='delta',b='theta')
+
+"""
 test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
@@ -233,3 +236,4 @@ test_A_B()
 test_copy()
 
 plot_pk_lin()
+"""
