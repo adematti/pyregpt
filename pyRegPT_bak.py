@@ -64,7 +64,6 @@ class Terms(object):
 	
 	def __init__(self,columns={},fields=None):
 	
-		super(Terms, self).__init__()
 		self.columns = {}
 		if fields is None:
 			self.columns.update(columns)
@@ -85,6 +84,17 @@ class Terms(object):
 		
 	def __str__(self):
 		return str(self.__dict__)
+	
+	def __setattr__(self,name,item):
+		if name not in ['columns']:
+			self.columns[name] = item
+		else:
+			object.__setattr__(self,name,item)
+	
+	def __getattribute__(self,name):
+		columns = object.__getattribute__(self,'columns')
+		if name in columns: return columns[name]
+		return object.__getattribute__(self,name)
 	
 	def __getitem__(self,name):
 		if isinstance(name,(str,unicode)):
@@ -141,26 +151,126 @@ class Terms(object):
 		
 	def rescale(self,scale=1.):
 		for key in self.fields: self[key] *= scale**(2*self.SCALE[key])
-		
+
 class TermsPkLin(Terms):
 
-	FIELDS = ['k','pk']
-	SCALE = {'k':0,'pk':1}
+	FIELDS = ['k','pk_lin']
+	SCALE = {'k':0,'pk_lin':1}
 	
 	@scale_factor(1)
 	def Plin(self):
-		return self['pk']
+		return self['pk_lin']
+
+
+class Terms2Loop(Terms):
+
+	FIELDS = ['k','pk_lin','sigma_v2','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree']
+	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'G1a_1loop':1,'G1a_2loop':2,'G1b_1loop':1,'G1b_2loop':2,'pkcorr_G2_tree_tree':2,'pkcorr_G2_tree_1loop':3,'pkcorr_G2_1loop_1loop':4,'pkcorr_G3_tree':3}
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+	
+	def P2loop(self,Dgrowth=1.,sigmav2=None):
+		#Dgrowth is Dgrowth or sigma8...
+		#Taruya 2012 (arXiv 1208.1191v1) eq 24
+		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigmav2 is None else sigmav2)
+		G1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1a_1loop']*(1. + factor) + Dgrowth**4*self['G1a_2loop'])
+		G1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1b_1loop']*(1. + factor) + Dgrowth**4*self['G1b_2loop'])
+		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
+		pkcorr_G1 = G1a_reg * G1b_reg * self['pk_lin']
+		#Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
+		pkcorr_G2 = Dgrowth**4 * scipy.exp(-2. * factor) * (self['pkcorr_G2_tree_tree'] * (1. + factor)**2 + self['pkcorr_G2_tree_1loop'] * Dgrowth**2 * (1. + factor) + self['pkcorr_G2_1loop_1loop'] * Dgrowth**4)
+		#Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
+		pkcorr_G3 = Dgrowth**6 * scipy.exp(-2. * factor) * self['pkcorr_G3_tree']
+		return pkcorr_G1 + pkcorr_G2 + pkcorr_G3
+
+class TermsBias(Terms):
+	
+	FIELDS = ['k','pk_lin','sigma_v2','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
+	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'pkbias_b2d':2,'pkbias_bs2d':2,'pkbias_b2t':2,'pkbias_bs2t':2,'pkbias_b22':2,'pkbias_b2s2':2,'pkbias_bs22':2,'sigma3sq':2}
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+		
+	@scale_factor(2)
+	def Pb2d(self):
+		return self['pkbias_b2d']
+	
+	@scale_factor(2)
+	def Pbs2d(self):
+		return self['pkbias_bs2d']
+
+	@scale_factor(2)
+	def Pb2t(self):
+		return self['pkbias_b2t']
+	
+	@scale_factor(2)
+	def Pbs2t(self):
+		return self['pkbias_bs2t']
+	
+	@scale_factor(2)
+	def Pb22(self):
+		return self['pkbias_b22']
+
+	@scale_factor(2)
+	def Pb2s2(self):
+		return self['pkbias_b2s2']
+
+	@scale_factor(2)
+	def Pbs22(self):
+		return self['pkbias_bs22']
+	
+	@scale_factor(2)
+	def Psigma3sq(self):
+		return self['pk_lin']*self['sigma3sq']
+	
+	@damping_factor(2)
+	def Pb22damp(self):
+		return self['pkbias_b22']
+
+	@damping_factor(2)
+	def Pb2s2damp(self):
+		return self['pkbias_b2s2']
+
+	@damping_factor(2)
+	def Pbs22damp(self):
+		return self['pkbias_bs22']
+
+class TermsAB(Terms):
+	
+	FIELDS = ['k','pk_lin','sigma_v2','A','B']
+	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'A':2,'B':2}
+	SHAPE = {'A':(3,3),'B':(4,3)}
+	
+	@scale_factor(1)
+	def Plin(self):
+		return self['pk_lin']
+	
+	@scale_factor(2)
+	def PA(self):
+		return self['A']
+	
+	@scale_factor(2)
+	def PB(self):
+		return self['B']
+
 
 class PyRegPT(object):
 
 	C_TYPE = ctypes.c_double
+	PATH_CUBA = os.path.join(os.getenv('CUBA'),'libcuba.so')
 	PATH_REGPT = os.path.join(os.path.dirname(os.path.realpath(__file__)),'regpt.so')
 	
 	def __init__(self):
 
-		super(PyRegPT, self).__init__()
+		cuba = ctypes.CDLL(self.PATH_CUBA,mode=ctypes.RTLD_GLOBAL)
 		self.regpt = ctypes.CDLL(self.PATH_REGPT,mode=ctypes.RTLD_GLOBAL)
 		self.pk_lin = TermsPkLin()
+		self.terms_2loop = Terms2Loop()
+		self.terms_bias = TermsBias()
+		self.terms_A_B = TermsAB()
 
 	def nodes_weights_gauss_legendre(self,xmin,xmax,nx):
 		
@@ -187,6 +297,17 @@ class PyRegPT(object):
 		self.regpt.interpol_lin.restype = self.C_TYPE
 		return self.regpt.interpol_lin(x,tabx[0],tabx[-1],taby[0],taby[-1])
 	
+	"""	
+	def interpol_pk_lin(self,k):
+	
+		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
+		pk = scipy.zeros_like(k)
+		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
+		self.regpt.interpol_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t)
+		self.regpt.interpol_pk_lin(k,pk,len(k))
+		
+		return pk
+	"""	
 	def find_pk_lin(self,k,interpol='poly'):
 	
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
@@ -209,43 +330,33 @@ class PyRegPT(object):
 	
 	def set_pk_lin(self,k,pk):
 		
-		self.pk_lin['k'] = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		self.pk_lin['pk'] = scipy.asarray(pk,dtype=self.C_TYPE).flatten()
+		self.pk_lin.k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
+		self.pk_lin.pk_lin = scipy.asarray(pk,dtype=self.C_TYPE).flatten()
 
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.pk_lin.size,))
 		self.regpt.set_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t)
-		self.regpt.set_pk_lin(self.pk_lin['k'],self.pk_lin['pk'],self.pk_lin.size)
+		self.regpt.set_pk_lin(self.pk_lin.k,self.pk_lin.pk_lin,self.pk_lin.size)
+		#self.regpt.set_pk_lin(k,pk,self.pk_lin.size)
 
 	def set_precision(self,calculation='allq',n=0,min=1.,max=-1.,interpol='test'):
 	
 		if calculation == 'all_q':
-			for calculation in ['spectrum_2loop_q','bias_q','A_2loop_q','B_q']:
+			for calculation in ['2loop_q','bias_q','A_B_q']:
 				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
 			return
 		if calculation == 'all_mu':
-			for calculation in ['gamma2_tree_mu','bias_mu','A_2loop_I_mu','B_mu']:
+			for calculation in ['gamma2_mu','bias_mu','A_B_mu']:
 				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
 			return
-		if calculation == 'spectrum_1loop_q':
-			for calculation in ['gamma1_1loop_q','gamma2_tree_q']:
-				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
-		if calculation == 'spectrum_2loop_q':
-			for calculation in ['gamma1_1loop_q','gamma1_2loop_q','gamma2_tree_q','gamma2d_1loop_q','gamma2t_1loop_q','gamma3_tree_q']:
-				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
-			return
-		if calculation == 'A_2loop_q':
-			for calculation in ['A_2loop_I_q','A_2loop_II_III_q']:
-				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
-			return
-		if calculation == 'all_pklin':
-			for calculation in ['spectrum_1loop_pk_lin','spectrum_2loop_pk_lin','bias_pk_lin','bispectrum_1loop_pk_lin','spectrum_A_2loop_pklin','spectrum_B_2loop_pklin']:
+		if calculation == '2loop_q':
+			for calculation in ['gamma1_1loop','gamma1_2loop','gamma2_q','gamma2d','gamma2v','gamma3']:
 				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
 			return
 		func = getattr(self.regpt,'set_precision_'+calculation)
-		if 'pk_lin' in calculation:
+		if calculation == 'pk_lin':
 			func.argtypes = (ctypes.c_char_p,)
 			func(interpol)
-		elif calculation in ['gamma3_tree_q','A_2loop_II_III_q']:
+		elif calculation == 'gamma3':
 			func.argtypes = (self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
 			func(min,max,interpol)
 		elif 'mu' in calculation:
@@ -254,56 +365,54 @@ class PyRegPT(object):
 		else:
 			func.argtypes = (ctypes.c_size_t,self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
 			func(n,min,max,interpol)
-			
-	def set_running_uvcutoff(self,calculation='all',uvcutoff=0.5):
-
-		if calculation=='all':
-			for calculation in ['spectrum_1loop','spectrum_2loop','bispectrum_1loop','bias']:
-				self.set_running_uvcutoff(calculation,uvcutoff=uvcutoff)
-			return
-		func = getattr(self.regpt,'set_running_uvcutoff_'+calculation)
-		func.argtypes = (self.C_TYPE,)
-		func(uvcutoff)
-		
-class Spectrum2Loop(PyRegPT,Terms):
-
-	FIELDS = ['k','pk_lin','sigma_v2','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree']
-	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'G1a_1loop':1,'G1a_2loop':2,'G1b_1loop':1,'G1b_2loop':2,'pkcorr_G2_tree_tree':2,'pkcorr_G2_tree_1loop':3,'pkcorr_G2_1loop_1loop':4,'pkcorr_G3_tree':3}
 	
-	def __init__(self):
-
-		super(Spectrum2Loop,self).__init__()
-	
-	def set_terms(self,k):
+	def set_k_2loop(self,k):
 		
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		for key in self.FIELDS: self[key] = scipy.zeros_like(k)
-		self['k'] = k
+		for key in self.terms_2loop.FIELDS: self.terms_2loop[key] = scipy.zeros_like(k)
+		self.terms_2loop.k = k
 		
-		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.size,))
-		self.regpt.set_terms_spectrum_2loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
-		self.regpt.set_terms_spectrum_2loop(self.size,*[self[key] for key in self.FIELDS])
+		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_2loop.size,))
+		self.regpt.set_k_2loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.terms_2loop.FIELDS)
+		self.regpt.set_k_2loop(self.terms_2loop.size,*[self.terms_2loop[key] for key in self.terms_2loop.FIELDS])
 	
-	def run_terms(self,a='delta',b='delta',nthreads=8):
+	def run_2loop(self,a='delta',b='delta',nthreads=8):
 		
-		self.regpt.run_terms_spectrum_2loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
-		self.regpt.run_terms_spectrum_2loop(a,b,nthreads)
+		self.regpt.run_2loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
+		self.regpt.run_2loop(a,b,nthreads)
 	
-	
-	@scale_factor(1)
-	def Plin(self):
-		return self['pk_lin']
-	
-	def P2loop(self,Dgrowth=1.,sigmav2=None):
-		#Dgrowth is Dgrowth or sigma8...
-		#Taruya 2012 (arXiv 1208.1191v1) eq 24
-		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigmav2 is None else sigmav2)
-		G1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1a_1loop']*(1. + factor) + Dgrowth**4*self['G1a_2loop'])
-		G1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1b_1loop']*(1. + factor) + Dgrowth**4*self['G1b_2loop'])
-		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
-		pkcorr_G1 = G1a_reg * G1b_reg * self['pk_lin']
-		#Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
-		pkcorr_G2 = Dgrowth**4 * scipy.exp(-2. * factor) * (self['pkcorr_G2_tree_tree'] * (1. + factor)**2 + self['pkcorr_G2_tree_1loop'] * Dgrowth**2 * (1. + factor) + self['pkcorr_G2_1loop_1loop'] * Dgrowth**4)
-		#Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
-		pkcorr_G3 = Dgrowth**6 * scipy.exp(-2. * factor) * self['pkcorr_G3_tree']
-		return pkcorr_G1 + pkcorr_G2 + pkcorr_G3
+	def set_k_bias(self,k):
+		
+		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
+		for key in self.terms_bias.FIELDS: self.terms_bias[key] = scipy.zeros_like(k)
+		self.terms_bias.k = k
+		
+		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_bias.size,))
+		self.regpt.set_k_bias.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.terms_bias.FIELDS)
+		self.regpt.set_k_bias(self.terms_bias.size,*[self.terms_bias[key] for key in self.terms_bias.FIELDS])
+		
+	def run_bias(self,nthreads=8):
+		
+		self.regpt.run_bias.argtypes = (ctypes.c_size_t,)
+		self.regpt.run_bias(nthreads)
+		
+	def set_k_A_B(self,k):
+		
+		self.terms_A_B.k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
+		for key in ['pk_lin','sigma_v2']:
+			self.terms_A_B[key] = scipy.zeros_like(k)
+		for key in ['A','B']:
+			self.terms_A_B[key] = scipy.zeros((self.terms_A_B.k.size,)+self.terms_A_B.SHAPE[key],dtype=self.C_TYPE).flatten()
+		
+		pointers = [ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.terms_A_B[key].size,)) for key in self.terms_A_B.FIELDS]
+		self.regpt.set_k_A_B.argtypes = (ctypes.c_size_t,)+tuple(pointers)
+		self.regpt.set_k_A_B(self.terms_A_B.k.size,*[self.terms_A_B[key] for key in self.terms_A_B.FIELDS])
+		
+		for key in ['A','B']:
+			self.terms_A_B[key].shape = (self.terms_A_B.k.size,) + self.terms_A_B.SHAPE[key]
+			self.terms_A_B[key] = scipy.transpose(self.terms_A_B[key],axes=(1,2,0))
+		
+	def run_A_B(self,nthreads=8):
+		
+		self.regpt.run_A_B.argtypes = (ctypes.c_size_t,)
+		self.regpt.run_A_B(nthreads)
