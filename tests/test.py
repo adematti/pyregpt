@@ -87,7 +87,6 @@ def test_interpol_poly():
 	for i in range(200):
 		for x,y in zip(tabx,taby):
 			assert pyregpt.interpol_poly(x,tabx,taby)==y
-	print pyregpt.interpol_poly(0.5,tabx,taby)
 
 def test_sigma_v2():
 	k,pklin = load_pklin()
@@ -100,15 +99,16 @@ def test_sigma_v2():
 def test_2loop(a='delta',b='delta'):
 
 	k,pklin = load_pklin()
-	pyregpt = PyRegPT()
-	pyregpt.set_precision(calculation='2loop_q',min=-2,max=-1.)
+	pyregpt = Spectrum2Loop()
+	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
+	
 	ref = load_reference_gamma(a,b)[20:40]
-	pyregpt.set_k_2loop(ref['k'])
-	pyregpt.run_2loop(a,b,nthreads=nthreads)
-	for key in pyregpt.terms_2loop.FIELDS:
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(a,b,nthreads=nthreads)
+	for key in pyregpt.FIELDS:
 		if key in ref.dtype.names:
-			testing.assert_allclose(pyregpt.terms_2loop[key],ref[key],rtol=1e-6,atol=1e-7)
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
 			print('{} {} {} ok'.format(a,b,key))
 
 def test_pad(a='delta',b='delta'):
@@ -224,7 +224,10 @@ test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
 test_sigma_v2()
-#test_2loop(a='delta',b='theta')
+test_2loop(a='delta',b='theta')
+
+
+"""
 test_all_2loop()
 test_pad()
 test_precision()
@@ -233,3 +236,4 @@ test_A_B()
 test_copy()
 
 plot_pk_lin()
+"""
