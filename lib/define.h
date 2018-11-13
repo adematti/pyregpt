@@ -93,15 +93,6 @@ typedef struct {
 	histo_t* pk_lin;
 	histo_t* sigma_v2;
 	histo_t* A;
-	histo_t* B;
-} TermsAB;
-
-typedef struct {
-	size_t nk;
-	histo_t* k;
-	histo_t* pk_lin;
-	histo_t* sigma_v2;
-	histo_t* A;
 } TermsA;
 
 typedef struct {

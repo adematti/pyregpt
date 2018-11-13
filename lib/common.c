@@ -1,6 +1,8 @@
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include "define.h"
 #include "common.h"
 
@@ -167,14 +169,17 @@ histo_t extrapol_pk(Pk pkin,histo_t k)
 	size_t end=pkin.nk-1;
 	size_t start=MAX(1,((long) end)-15);	
 	histo_t dlnp_dlnk = 0.;
-	for (ik=start;ik<end;ik++) dlnp_dlnk += my_log(pkin.pk[ik+1]/pkin.pk[ik-1])/my_log(pkin.k[ik+1]/pkin.k[ik-1]);
+	for (ik=start;ik<end;ik++) {
+		if ((pkin.pk[ik+1]<=0.)||(pkin.pk[ik-1]<=0.)) return 0.;
+		dlnp_dlnk += my_log(pkin.pk[ik+1]/pkin.pk[ik-1])/my_log(pkin.k[ik+1]/pkin.k[ik-1]);
+	}
 	histo_t n_eff = dlnp_dlnk/((histo_t) (end-start));
 	return pkin.pk[end]*my_pow((k/pkin.k[end]),n_eff);
 }
 
 histo_t extrapol_pk_lin(histo_t k)
 {
-	extrapol_pk(pk_lin,k);
+	return extrapol_pk(pk_lin,k);
 }
 
 void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
@@ -182,7 +187,7 @@ void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 	size_t ik;
 	size_t start=0;
 	size_t end=pkin.nk-1;
-	histo_t kstart = pkin.k[start];
+	//histo_t kstart = pkin.k[start];
 	histo_t kend = pkin.k[end];
 	for (ik=0;ik<nk;ik++) {
 		if (k[ik]>kend) pk[ik] = extrapol_pk(pkin,k[ik]);
@@ -453,7 +458,7 @@ void write_gauss_legendre_mu(GaussLegendreMu gauss_legendre,char *fn)
 	size_t imu,nmu=gauss_legendre.nmu;
 	fr=fopen(fn,"w");
 	if (fr==NULL) error_open_file(fn);
-	for (imu=0;imu<nmu;imu++) fprintf(fr,"%f %f %f\n",gauss_legendre.mu[imu],gauss_legendre.w[imu]);
+	for (imu=0;imu<nmu;imu++) fprintf(fr,"%f %f\n",gauss_legendre.mu[imu],gauss_legendre.w[imu]);
 	fclose(fr);
 }
 

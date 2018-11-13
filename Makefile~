@@ -1,17 +1,18 @@
 ####################################################
 ###          User definable stuff
 
-EXEC = regpt spectrum_1loop spectrum_2loop spectrum_A spectrum_B spectrum_bias
+EXEC = regpt
 
 DEFINEOPTIONS = -D_VERBOSE
 #DEFINEOPTIONS += -D_DEBUG
+#DEFINEOPTIONS += -D_CUBA15
 #DEFINEOPTIONS += -D_FLOAT32
 #GSL options
 GSL_INC = /opt/rhel-6.x86_64/gnu4.6.2/gsl/1.15/include
 GSL_LIB = /opt/rhel-6.x86_64/gnu4.6.2/gsl/1.15/lib
 CUBA_INC = $(CUBA)
 CUBA_LIB = $(CUBA)
-CUBA_OBJ = $(CUBA)/Vegas.o $(CUBA)/Suave.o
+CUBA_OBJ = $(CUBA)/*.o
 REGPT_LIB = ./lib
 
 ### End of user-definable stuff
@@ -27,8 +28,8 @@ DEFINEFLAGSCPU = $(DEFINEOPTIONS)
 
 # COMPILER AND OPTIONS
 COMPCPU = gcc
-#OPTCPU = -Wall -O3 -fopenmp $(DEFINEFLAGSCPU)
-OPTCPU = -Wextra -O3 -fopenmp $(DEFINEFLAGSCPU)
+OPTCPU = -Wall -O3 -fopenmp $(DEFINEFLAGSCPU)
+#OPTCPU = -Wextra -O3 -fopenmp $(DEFINEFLAGSCPU)
 
 #INCLUDES AND LIBRARIES
 INCLUDECOM = -I./lib -I$(GSL_INC) -I$(CUBA_INC)
@@ -49,18 +50,21 @@ CPKCORR_GAMMA3 = $(REGPT_LIB)/calc_pkcorr_from_gamma3.c
 CSPECTRUM_1LOOP = $(REGPT_LIB)/spectrum_1loop.c
 CSPECTRUM_2LOOP = $(REGPT_LIB)/spectrum_2loop.c
 
+CPKCORR_A_1LOOP = $(REGPT_LIB)/calc_pkcorr_from_A_1loop.c
+CSPECTRUM_A_1LOOP = $(REGPT_LIB)/spectrum_A_1loop.c
+
 CBISPECTRUM_1LOOP = $(REGPT_LIB)/bispectrum_1loop.c
-CPKCORR_A_I = $(REGPT_LIB)/calc_pkcorr_from_A_I.c
-CPKCORR_A_II_III = $(REGPT_LIB)/calc_pkcorr_from_A_II_III.c
+CPKCORR_A_2LOOP_I = $(REGPT_LIB)/calc_pkcorr_from_A_2loop_I.c
+CPKCORR_A_2LOOP_II_III = $(REGPT_LIB)/calc_pkcorr_from_A_2loop_II_III.c
 CSPECTRUM_A_2LOOP = $(REGPT_LIB)/spectrum_A_2loop.c
 
 CPKCORR_B = $(REGPT_LIB)/calc_pkcorr_from_B.c
 CSPECTRUM_B = $(REGPT_LIB)/spectrum_B.c
 
-CPKCORR_BIAS = $(REGPT_LIB)/calc_pkcorr_from_bias.c
-CSPECTRUM_BIAS = $(REGPT_LIB)/spectrum_bias.c
+CPKCORR_BIAS_1LOOP = $(REGPT_LIB)/calc_pkcorr_from_bias_1loop.c
+CSPECTRUM_BIAS_1LOOP = $(REGPT_LIB)/spectrum_bias_1loop.c
 
-SRC = $(CREGPT) $(CCOMMON) $(CKERNELS) $(CGAMMA1_1LOOP) $(CGAMMA1_2LOOP) $(CGAMMA2d_1LOOP) $(CGAMMA2t_1LOOP) $(CPKCORR_GAMMA1) $(CPKCORR_GAMMA2) $(CPKCORR_GAMMA3) $(CSPECTRUM_1LOOP) $(CSPECTRUM_2LOOP) $(CBISPECTRUM_1LOOP) $(CPKCORR_A_I) $(CPKCORR_A_II_III) $(CSPECTRUM_A_2LOOP) $(CPKCORR_B) $(CSPECTRUM_B) $(CPKCORR_BIAS) $(CSPECTRUM_BIAS)
+SRC = $(CREGPT) $(CCOMMON) $(CKERNELS) $(CGAMMA1_1LOOP) $(CGAMMA1_2LOOP) $(CGAMMA2d_1LOOP) $(CGAMMA2t_1LOOP) $(CPKCORR_GAMMA1) $(CPKCORR_GAMMA2) $(CPKCORR_GAMMA3) $(CSPECTRUM_1LOOP) $(CSPECTRUM_2LOOP) $(CPKCORR_A_1LOOP) $(CSPECTRUM_A_1LOOP) $(CBISPECTRUM_1LOOP) $(CPKCORR_A_2LOOP_I) $(CPKCORR_A_2LOOP_II_III) $(CSPECTRUM_A_2LOOP) $(CPKCORR_B) $(CSPECTRUM_B) $(CPKCORR_BIAS) $(CSPECTRUM_BIAS)
 
 #.o FILES
 

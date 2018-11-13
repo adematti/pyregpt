@@ -4,7 +4,6 @@ import os
 import scipy
 from scipy import constants,integrate
 from numpy import testing
-
 from pyregpt import *
 
 nthreads = 8
@@ -12,19 +11,76 @@ nthreads = 8
 def load_pklin():
 
 	return scipy.loadtxt('ref_pk_lin.dat',unpack=True)
-
-def load_reference_gamma(a='delta',b='theta'):
+	
+def load_reference_terms_2loop(a='delta',b='theta'):
 	dtype = ['k','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree','sigma_v2']
 	dtype = [(key,'f8') for key in dtype]
-	ref = scipy.loadtxt('ref_gamma_{}_{}.dat'.format(a,b),dtype=dtype)
+	ref = scipy.loadtxt('ref_terms_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
 	return ref
 
-def load_reference_pk(a='delta',b='theta'):
+def load_reference_spectrum_2loop(a='delta',b='theta'):
 	dtype = ['k','pk_nowiggle','pk_lin','pk_2loop','error','Dgrowth']
 	dtype = [(key,'f8') for key in dtype]
-	ref = scipy.loadtxt('ref_pk_{}_{}.dat'.format(a,b),dtype=dtype)
+	ref = scipy.loadtxt('ref_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
+	return ref
+
+def load_reference_spectrum_1loop(a='delta',b='theta'):
+	dtype = ['k','pk_nowiggle','pk_lin','pk_1loop','error','Dgrowth']
+	dtype = [(key,'f8') for key in dtype]
+	ref = scipy.loadtxt('ref_spectrum_1loop_{}_{}.dat'.format(a,b),dtype=dtype)
 	return ref
 	
+def save_reference_terms_bias_1loop():
+	pyregpt = Bias1Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	k = pyregpt.pk_lin['k'][(pyregpt.pk_lin['k'] > 0.1)]
+	pyregpt.set_terms(k)
+	pyregpt.run_terms(nthreads=nthreads)
+	scipy.savetxt('ref_terms_bias_1loop.dat',scipy.concatenate([pyregpt[key][:,None] for key in pyregpt.FIELDS],axis=-1))
+
+def load_reference_terms_bias_1loop():
+	dtype = [(key,'f8') for key in Bias1Loop.FIELDS]
+	ref = scipy.loadtxt('ref_terms_bias_1loop.dat',dtype=dtype)
+	return ref
+
+def save_reference_terms_A_1loop():
+	pyregpt = A1Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	k = pyregpt.pk_lin['k'][(pyregpt.pk_lin['k'] > 0.1)]
+	pyregpt.set_terms(k)
+	pyregpt.run_terms(nthreads=nthreads)
+	scipy.savetxt('ref_terms_A_1loop.dat',scipy.concatenate([pyregpt['k'][:,None],pyregpt['A']],axis=-1))
+
+def load_reference_terms_A_1loop():
+	dtype = [('k','f8'),('A',('f8',5))]
+	ref = scipy.loadtxt('ref_terms_A_1loop.dat',dtype=dtype)
+	return ref
+
+def save_reference_terms_A_2loop():
+	pyregpt = A2Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	k = pyregpt.pk_lin['k'][(pyregpt.pk_lin['k'] > 0.1)]
+	k = scipy.asarray([k[5],k[42]])
+	pyregpt.set_terms(k)
+	pyregpt.set_precision(calculation='gamma1_1loop_q',min=-2,max=-1.,n=300)
+	pyregpt.set_precision(calculation='gamma2_1loop_q',min=-2,max=-1.,n=300)
+	pyregpt.set_precision(calculation='A_2loop_q',min=-2,max=-1.)
+	pyregpt.run_terms(nthreads=nthreads)
+	scipy.savetxt('ref_terms_A_2loop.dat',scipy.concatenate([pyregpt['k'][:,None],pyregpt['A']],axis=-1))
+
+def load_reference_terms_A_2loop():
+	dtype = [('k','f8'),('A',('f8',5))]
+	ref = scipy.loadtxt('ref_terms_A_2loop.dat',dtype=dtype)
+	return ref
+
+def load_reference_terms_B_2loop():
+	dtype = [('k','f8'),('B',('f8',9))]
+	ref = scipy.loadtxt('ref_terms_B_2loop.dat',dtype=dtype)
+	return ref
+
 def test_gauss_legendre():
 
 	pyregpt = PyRegPT()
@@ -45,23 +101,6 @@ def test_gauss_legendre():
 	test = scipy.sum(scipy.sin(xref)*wref,axis=0)
 	
 	testing.assert_allclose(ref,test,rtol=1e-4,atol=1e-4)
-
-"""	
-def test_interpol_pk_lin():
-	
-	k,pklin = load_pklin()
-	pyregpt = PyRegPT()
-	pyregpt.set_pk_lin(k,pklin)
-	
-	kout = scipy.copy(k)
-	pk = pyregpt.interpol_pk_lin(kout)
-	testing.assert_allclose(pklin,pk,rtol=1e-7,atol=1e-7)
-	
-	kout = kout/1.2
-	pk = pyregpt.interpol_pk_lin(kout)
-	ref = scipy.interp(kout,k,pklin,left=0.,right=0.)
-	testing.assert_allclose(pk,ref,rtol=1e-7,atol=1e-7)
-"""
 
 def test_find_pk_lin():
 	
@@ -96,14 +135,13 @@ def test_sigma_v2():
 	sigma_v2 = pyregpt.calc_running_sigma_v2(newk)
 	assert sigma_v2[-2] == sigma_v2[-1]
 
-def test_2loop(a='delta',b='delta'):
-
-	k,pklin = load_pklin()
-	pyregpt = Spectrum2Loop()
-	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
-	pyregpt.set_pk_lin(k,pklin)
 	
-	ref = load_reference_gamma(a,b)[20:40]
+def test_terms_1loop(a='delta',b='delta'):
+	k,pklin = load_pklin()
+	pyregpt = Spectrum1Loop()
+	pyregpt.set_precision(calculation='spectrum_1loop_q',min=-2,max=-1.)
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_2loop(a,b)[20:40]
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	for key in pyregpt.FIELDS:
@@ -111,90 +149,158 @@ def test_2loop(a='delta',b='delta'):
 			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
 			print('{} {} {} ok'.format(a,b,key))
 
-def test_pad(a='delta',b='delta'):
+def test_spectrum_1loop(a='delta',b='delta'):
 	k,pklin = load_pklin()
-	pyregpt = PyRegPT()
+	pyregpt = Spectrum1Loop()
+	pyregpt.set_precision(calculation='spectrum_1loop_q',min=-2,max=-1.)
+	#pyregpt.set_precision(calculation='gamma2_tree_mu',n=15)
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_gamma(a,b)[20:40]
-	pyregpt.set_k_2loop(ref['k'])
-	pyregpt.run_2loop(a,b,nthreads=nthreads)
-	bak = pyregpt.terms_2loop.deepcopy()
-	pyregpt.set_pk_lin(k,pklin)
-	pyregpt.terms_2loop.pad_k(k,pk_lin=pyregpt.find_pk_lin(k,interpol='poly'),sigma_v2=pyregpt.calc_running_sigma_v2(k))
-	for key in pyregpt.terms_2loop.FIELDS:
-		#print key,pyregpt.terms_2loop[key][(pyregpt.terms_2loop.k>=bak.k[0]*0.8) & (pyregpt.terms_2loop.k<=bak.k[-1]*1.1)]
-		assert len(pyregpt.terms_2loop[key]) == len(k)
-		mask = (pyregpt.terms_2loop.k>=bak.k[0]) & (pyregpt.terms_2loop.k<=bak.k[-1])
-		testing.assert_allclose(pyregpt.terms_2loop[key][mask],bak[key],rtol=1e-6,atol=1e-7)
-		if key=='k': testing.assert_allclose(pyregpt.terms_2loop[key][~mask],k[~mask],rtol=1e-6,atol=1e-7)
-		if key=='pk_lin': testing.assert_allclose(pyregpt.terms_2loop[key][~mask],pklin[~mask],rtol=1e-6,atol=1e-7)
-			
-"""
-def test_2loop_lastk(a='delta',b='delta'):
-
-	k,pklin = load_pklin()
-	pyregpt = PyRegPT()
-	pyregpt.set_pk_lin(k,pklin)
-	pyregpt.set_k_2loop(k[-1:])
-	pyregpt.run_2loop(a,b,nthreads=nthreads)
-	for key in pyregpt.terms_2loop.FIELDS:
-		print key,scipy.isnan(pyregpt.terms_2loop[key]).sum(),pyregpt.terms_2loop[key]
-"""
-
-def test_precision(a='delta',b='delta'):
-	k,pklin = load_pklin()
-	pyregpt = PyRegPT()
-	pyregpt.set_pk_lin(k,pklin)
-	pyregpt.set_k_2loop(pyregpt.pk_lin.k[10:20])
-	pyregpt.run_2loop(a,b,nthreads=nthreads)
-	pyregpt2 = PyRegPT()
-	pyregpt2.set_pk_lin(k,pklin)
-	#pyregpt2.set_precision(calculation='gamma1_1loop',n=700,interpol='poly')
-	pyregpt2.set_precision(calculation='all_q',n=700,interpol='poly')
-	pyregpt2.set_k_2loop(pyregpt.pk_lin.k[10:20])
-	pyregpt2.run_2loop(a,b,nthreads=nthreads)
+	ref = load_reference_spectrum_1loop(a,b)[10:200]
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(a,b,nthreads=nthreads)
+	pk_lin = pyregpt.Plin(Dgrowth=ref['Dgrowth'][0])
+	pk_1loop = pyregpt.P1loop(Dgrowth=ref['Dgrowth'][0])
+	testing.assert_allclose(pk_lin,ref['pk_lin'],rtol=1e-5,atol=1e-4)
+	testing.assert_allclose(pk_1loop,ref['pk_1loop'],rtol=1e-5,atol=1e-5)
 	
-	for key in pyregpt.terms_2loop.FIELDS:
-		if 'gamma1' in key: testing.assert_allclose(pyregpt.terms_2loop[key],pyregpt2.terms_2loop[key],rtol=1e-5,atol=1e-5)
-		else: testing.assert_allclose(pyregpt.terms_2loop[key],pyregpt2.terms_2loop[key],rtol=1e-8,atol=1e-8)
-		print('{} {} {} ok'.format(a,b,key))
 
-def test_pk_2loop(a='delta',b='delta'):
+def test_all_1loop():
+	for a in ['delta','theta']:
+		for b in ['delta','theta']:
+			test_terms_1loop(a,b)
+			test_spectrum_1loop(a,b)
+
+def test_terms_2loop(a='delta',b='delta'):
+
 	k,pklin = load_pklin()
-	pyregpt = PyRegPT()
-	pyregpt.set_precision(calculation='2loop_q',min=-2,max=-1.)
+	pyregpt = Spectrum2Loop()
+	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_pk(a,b)[20:30]
-	pyregpt.set_k_2loop(ref['k'])
-	pyregpt.run_2loop(a,b,nthreads=nthreads)
-	pk_lin = pyregpt.terms_2loop.Plin(Dgrowth=ref['Dgrowth'][0])
-	pk_2loop = pyregpt.terms_2loop.P2loop(Dgrowth=ref['Dgrowth'][0])
+	
+	ref = load_reference_terms_2loop(a,b)[200:240]
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(a,b,nthreads=nthreads)
+	for key in pyregpt.FIELDS:
+		if key in ref.dtype.names:
+			print scipy.absolute(pyregpt[key]/ref[key]-1).max()
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
+			print('{} {} {} ok'.format(a,b,key))
+
+
+def test_spectrum_2loop(a='delta',b='delta'):
+	k,pklin = load_pklin()
+	pyregpt = Spectrum2Loop()
+	#pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_spectrum_2loop(a,b)[20:30]
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(a,b,nthreads=nthreads)
+	pk_lin = pyregpt.Plin(Dgrowth=ref['Dgrowth'][0])
+	pk_2loop = pyregpt.P2loop(Dgrowth=ref['Dgrowth'][0])
 	testing.assert_allclose(pk_lin,ref['pk_lin'],rtol=1e-5,atol=1e-5)
 	testing.assert_allclose(pk_2loop,ref['pk_2loop'],rtol=1e-5,atol=1e-5)
 
 def test_all_2loop():
 	for a in ['delta','theta']:
 		for b in ['delta','theta']:
-			test_2loop(a,b)
-			test_pk_2loop(a,b)
+			test_terms_2loop(a,b)
+			test_spectrum_2loop(a,b)
 
-def test_bias():
-	pyregpt = PyRegPT()
+def test_precision(a='delta',b='delta'):
 	k,pklin = load_pklin()
+	pyregpt = Spectrum2Loop()
 	pyregpt.set_pk_lin(k,pklin)
-	pyregpt.set_k_bias(pyregpt.pk_lin.k)
-	pyregpt.run_bias(nthreads=nthreads)
-	#for key in pyregpt.KEYS_BIAS: print key,pyregpt.terms_bias[key]
-
-def test_A_B():
-	pyregpt = PyRegPT()
-	k,pklin = load_pklin()
-	pyregpt.set_pk_lin(k,pklin)
-	pyregpt.set_k_A_B(pyregpt.pk_lin.k)
-	pyregpt.run_A_B(nthreads=nthreads)
-	pyregpt.terms_A_B.PA()
-	#for key in pyregpt.KEYS_A_B: print key,pyregpt.terms_A_B[key]
+	pyregpt.set_terms(pyregpt.pk_lin['k'][10:20])
+	pyregpt.run_terms(a,b,nthreads=nthreads)
+	pyregpt2 = Spectrum2Loop()
+	pyregpt2.set_pk_lin(k,pklin)
+	#pyregpt2.set_precision(calculation='gamma1_1loop',n=700,interpol='poly')
+	pyregpt2.set_precision(calculation='all_q',n=700,interpol='poly')
+	pyregpt2.set_terms(pyregpt.pk_lin['k'][10:20])
+	pyregpt2.run_terms(a,b,nthreads=nthreads)
 	
+	for key in pyregpt.FIELDS:
+		if 'gamma1' in key: testing.assert_allclose(pyregpt[key],pyregpt2[key],rtol=1e-5,atol=1e-5)
+		else: testing.assert_allclose(pyregpt[key],pyregpt2[key],rtol=1e-8,atol=1e-8)
+		print('{} {} {} ok'.format(a,b,key))
+
+def test_A_1loop():
+	pyregpt = A1Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_A_1loop()
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(nthreads=nthreads)
+	pyregpt.PA()
+	for key in pyregpt.FIELDS:
+		if key in ref.dtype.names:
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
+			print('{} ok'.format(key))
+
+def test_A_2loop():
+	pyregpt = A2Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_A_2loop()
+	pyregpt.set_terms(ref['k'])
+	pyregpt.set_precision(calculation='gamma1_1loop_q',min=-2,max=-1.,n=300)
+	pyregpt.set_precision(calculation='gamma2_1loop_q',min=-2,max=-1.,n=300)
+	pyregpt.set_precision(calculation='A_2loop_q',min=-2,max=-1.)
+	pyregpt.run_terms(nthreads=nthreads)
+	pyregpt.PA()
+	for key in pyregpt.FIELDS:
+		if key in ref.dtype.names:
+			#print scipy.absolute(pyregpt[key]/ref[key]-1).max()
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
+			print('{} ok'.format(key))
+	
+def test_B_2loop():
+	pyregpt = B2Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_B_2loop()
+	pyregpt.set_terms(ref['k'])
+	pyregpt.set_precision(calculation='gamma1_1loop_q',min=-2,max=-1.,n=300)
+	pyregpt.set_precision(calculation='gamma2_tree_q',min=-2,max=-1.,n=400)
+	pyregpt.set_precision(calculation='gamma2_tree_mu',min=-2,max=-1.,n=15)
+	pyregpt.set_precision(calculation='B_q',min=-2,max=-1.)
+	pyregpt.run_terms(nthreads)
+	pyregpt.PB()
+	for key in pyregpt.FIELDS:
+		if key in ref.dtype.names:
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
+			print('{} ok'.format(key))
+
+def test_bias_1loop():
+	pyregpt = Bias1Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_bias_1loop()
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(nthreads=nthreads)
+	for key in pyregpt.FIELDS:
+		if key in ref.dtype.names:
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
+			print('{} ok'.format(key))
+
+def test_pad(a='delta',b='delta'):
+	k,pklin = load_pklin()
+	pyregpt = Spectrum2Loop()
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_2loop(a,b)[20:40]
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(a,b,nthreads=nthreads)
+	bak = pyregpt.deepcopy()
+	pyregpt.set_pk_lin(k,pklin)
+	pyregpt.pad_k(k,pk_lin=pyregpt.find_pk_lin(k,interpol='poly'),sigma_v2=pyregpt.calc_running_sigma_v2(k))
+	for key in pyregpt.FIELDS:
+		#print key,pyregpt.terms_2loop[key][(pyregpt.terms_2loop.k>=bak.k[0]*0.8) & (pyregpt.terms_2loop.k<=bak.k[-1]*1.1)]
+		assert len(pyregpt[key]) == len(k)
+		mask = (pyregpt['k']>=bak['k'][0]) & (pyregpt['k']<=bak['k'][-1])
+		testing.assert_allclose(pyregpt[key][mask],bak[key],rtol=1e-6,atol=1e-7)
+		if key=='k': testing.assert_allclose(pyregpt[key][~mask],k[~mask],rtol=1e-6,atol=1e-7)
+		if key=='pk_lin': testing.assert_allclose(pyregpt[key][~mask],pklin[~mask],rtol=1e-6,atol=1e-7)
+
 def test_copy():
 	pyregpt = PyRegPT()
 	k,pklin = load_pklin()
@@ -206,7 +312,6 @@ def test_copy():
 	assert dcp.pk_lin[0] == pyregpt.pk_lin.pk_lin[0]/2.
 
 def plot_pk_lin():
-	
 	from matplotlib import pyplot
 	k,pklin = load_pklin()
 	pyregpt = PyRegPT()
@@ -218,22 +323,44 @@ def plot_pk_lin():
 	pyplot.axvline(x=k[0],ymin=0.,ymax=1.)
 	pyplot.axvline(x=k[-1],ymin=0.,ymax=1.)
 	pyplot.show()
-	
 
+
+"""
+save_reference_terms_A_1loop()
+save_reference_terms_A_2loop()
+save_reference_terms_bias_1loop()
+"""
+"""
 test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
 test_sigma_v2()
-test_2loop(a='delta',b='theta')
+test_terms_1loop(a='delta',b='theta')
+test_all_1loop()
+test_terms_2loop(a='delta',b='theta')
+test_all_2loop()
+test_precision()
+"""
+"""
+test_A_1loop()
+test_A_2loop()
+test_B_2loop()
+test_bias_1loop()
+"""
+"""
+test_pad()
+test_copy()
+plot_pk_lin()
+"""
 
+#test_bias_1loop()
 
 """
-test_all_2loop()
-test_pad()
-test_precision()
-test_bias()
-test_A_B()
-test_copy()
+def debug():
+	k,_,_,pk_ref_dt,pk_ref_tt = scipy.loadtxt('ref_spectra_B.dat',unpack=True)
+	k,pk_debug_dt,pk_debug_tt = scipy.loadtxt('debug_spectra_B.dat',unpack=True)
+	testing.assert_allclose(pk_debug_dt,pk_ref_dt,rtol=1e-6,atol=1e-7)
+	testing.assert_allclose(pk_debug_tt,pk_ref_tt,rtol=1e-6,atol=1e-7)
 
-plot_pk_lin()
+debug()
 """

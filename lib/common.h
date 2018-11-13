@@ -3,6 +3,24 @@
 
 #define EPS 3.e-14
 
+// ios
+
+void error_open_file(char *fname);
+
+void print_num_threads();
+
+void print_pk_lin();
+
+void print_k(histo_t *k,size_t nk);
+
+void print_flags(FLAG a,FLAG b);
+
+void set_num_threads(size_t num_threads);
+
+FLAG set_flag(char* flag);
+
+void set_pk_lin(histo_t* k,histo_t* pk,size_t nk);
+
 // usual functions
 
 inline histo_t my_abs(histo_t x);
@@ -123,23 +141,37 @@ void init_gamma3_tree();
 
 void free_gamma3_tree();
 
-void calc_pkcorr_from_gamma3(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tree);
+void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tree);
 
 // bias
 
-void set_precision_bias_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
+void set_precision_bias_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
-void set_precision_bias_mu(size_t n_,char* interpol_);
+void set_precision_bias_1loop_mu(size_t n_,char* interpol_);
 
-void init_bias();
+void init_bias_1loop();
 
-void free_bias();
+void free_bias_1loop();
 
-typedef histo_t (kernel_bias)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
+typedef histo_t (kernel_bias_1loop)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
 
-histo_t calc_pkcorr_from_bias(FLAG a, histo_t k, kernel_bias kernel, _Bool run_half);
+histo_t calc_pkcorr_from_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half);
 
-// A
+// A 1 loop
+
+void set_precision_A_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
+
+void set_precision_A_1loop_mu(size_t n_,char* interpol_);
+
+void init_A_1loop();
+
+void free_A_1loop();
+
+void calc_pkcorr_from_A_1loop(histo_t k,histo_t* pkcorr_A);
+
+// A 2 loop
+
+void kernel_projection_A_tA(histo_t x, histo_t mu, histo_t* kernel_A, histo_t* kernel_tA);
 
 void set_precision_A_2loop_I_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
@@ -149,11 +181,15 @@ void init_A_2loop_I();
 
 void free_A_2loop_I();
 
+void calc_pkcorr_from_A_2loop_I(histo_t k,histo_t* pkcorr_A);
+
 void set_precision_A_2loop_II_III(histo_t min_,histo_t max_,char* interpol_);
 
 void init_A_2loop_II_III();
 
 void free_A_2loop_II_III();
+
+void calc_pkcorr_from_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A);
 
 // B
 
@@ -164,6 +200,8 @@ void set_precision_B_mu(size_t n_,char* interpol_);
 void init_B(Pk pk_dt_,Pk pk_tt_);
 
 void free_B();
+
+void calc_pkcorr_from_B(histo_t k,histo_t* pkcorr_B);
 
 // spectrum 1 loop
 
@@ -178,6 +216,10 @@ void set_precision_bispectrum_1loop_pk_lin(char* interpol_);
 void set_running_uvcutoff_bispectrum_1loop(histo_t uvcutoff_);
 
 void get_precision_bispectrum_1loop_pk_lin(INTERPOL *interpol_);
+
+void init_bispectrum_1loop_I();
+
+void free_bispectrum_1loop_I();
 
 void get_running_uvcutoff_bispectrum_1loop(histo_t *uvcutoff_);
 

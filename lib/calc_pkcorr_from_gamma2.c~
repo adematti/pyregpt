@@ -129,8 +129,8 @@ void calc_pkcorr_from_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma
 		histo_t x = gauss_legendre_q.x[iq];
 		if (!set_mu_range(x)) continue;
 		
-		histo_t integ_pkcorr1=0,integ_pkcorr2=0,integ_pkcorr3=0;
 		size_t imu,nmu=gauss_legendre_mu.nmu;
+		histo_t integ_pkcorr1=0,integ_pkcorr2=0,integ_pkcorr3=0;
 		
 		for (imu=0;imu<nmu;imu++) {
 			histo_t kernel1,kernel2,kernel3;
@@ -145,6 +145,7 @@ void calc_pkcorr_from_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma
  		*pkcorr_gamma2_tree_tree += integ_pkcorr1 * x3w;
 		*pkcorr_gamma2_tree_1loop += integ_pkcorr2 * x3w;
 		*pkcorr_gamma2_1loop_1loop += integ_pkcorr3 * x3w;
+		printf("%.3f ",integ_pkcorr1);
 	}
 
 	histo_t factor = k*k*k / (2.*M_PI*M_PI);

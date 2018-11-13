@@ -69,7 +69,7 @@ void run_terms_spectrum_1loop(char* a_,char* b_,size_t num_threads)
 	FLAG a = set_flag(a_);
 	FLAG b = set_flag(b_);
 #ifdef _VERBOSE
-	printf("*** Calculation at one-loop order\n");
+	printf("*** Calculation of power spectrum at 1 loop\n");
 	print_flags(a,b);
 #endif //_VERBOSE
 	set_num_threads(num_threads);
@@ -91,7 +91,8 @@ void run_terms_spectrum_1loop(char* a_,char* b_,size_t num_threads)
 #endif //_VERBOSE
 			histo_t k = terms_1loop.k[ik];
 			terms_1loop.G1a_1loop[ik] = gamma1_1loop(a,k);
-			terms_1loop.G1b_1loop[ik] = gamma1_1loop(b,k);
+			if (b==a) terms_1loop.G1b_1loop[ik] = terms_1loop.G1a_1loop[ik];
+			else terms_1loop.G1b_1loop[ik] = gamma1_1loop(b,k);
 			calc_pkcorr_from_gamma2_tree(a,b,k,&(terms_1loop.pkcorr_G2_tree_tree[ik]));
 		}
 #pragma omp critical
@@ -104,7 +105,7 @@ void run_terms_spectrum_1loop(char* a_,char* b_,size_t num_threads)
 	timer(1);
 #endif //_VERBOSE
 #ifdef _DEBUG
-	write_1loop("debug_1loop.dat");
+	write_terms_spectrum_1loop("debug_1loop.dat");
 #endif //_DEBUG
 }
 

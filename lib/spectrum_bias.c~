@@ -47,18 +47,18 @@ histo_t kernel_sigma3sq(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq
 }
 
 
-void set_precision_bias_pk_lin(char* interpol_)
+void set_precision_bias_1loop_pk_lin(char* interpol_)
 {
 	set_interpol(&interpol_pk_lin,interpol_);
 }
 
-void set_running_uvcutoff_bias_sigma_v2(histo_t uvcutoff_)
+void set_running_uvcutoff_bias_1loop(histo_t uvcutoff_)
 {
 	uvcutoff = uvcutoff_;
 }
 
 
-void set_terms_bias(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* pkbias_b2d,histo_t* pkbias_bs2d,histo_t* pkbias_b2t,histo_t* pkbias_bs2t,histo_t* pkbias_b22,histo_t* pkbias_b2s2,histo_t* pkbias_bs22,histo_t* sigma3sq)
+void set_terms_bias_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* pkbias_b2d,histo_t* pkbias_bs2d,histo_t* pkbias_b2t,histo_t* pkbias_bs2t,histo_t* pkbias_b22,histo_t* pkbias_b2s2,histo_t* pkbias_bs22,histo_t* sigma3sq)
 {
 	terms_bias.nk = nk;
 	terms_bias.k = k;
@@ -79,7 +79,7 @@ void set_terms_bias(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo
 #endif //_VERBOSE
 }
 
-void run_terms_bias(size_t num_threads)
+void run_terms_bias_1loop(size_t num_threads)
 {
 
 #ifdef _VERBOSE

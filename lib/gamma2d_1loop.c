@@ -1,12 +1,11 @@
-#ifndef _REGPT_GAMMA2D_
-#define _REGPT_GAMMA2D_
-#define NPOWERS 20
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "define.h"
 #include "common.h"
 #include "kernels.h"
+
+#define NPOWERS 20
 
 histo_t kernel_gamma2d_exact(histo_t k1_,histo_t k2_,histo_t k3_,histo_t q_)
 {
@@ -1922,5 +1921,3 @@ histo_t gamma2d_1loop(histo_t k1, histo_t k2, histo_t k3)
 	}
 	return integ_gamma / (8.*M_PI*M_PI*M_PI);
 }
-
-#endif //_REGPT_GAMMA2D_

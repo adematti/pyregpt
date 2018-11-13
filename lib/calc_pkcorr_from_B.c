@@ -14,7 +14,7 @@ static Pk pk_dt,pk_tt;
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
-static Precision precision_q = {.n=200,.min=5e-4,.max=10.,.interpol=POLY};
+static Precision precision_q = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_mu = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 
 static void kernel_B(size_t iq,histo_t mu_,histo_t *kernel)
@@ -24,24 +24,28 @@ static void kernel_B(size_t iq,histo_t mu_,histo_t *kernel)
 	histo_t xmu = 1.+x[2]-2.*mu[1]*x[1];
 	histo_t q = gauss_legendre_q.q[iq];
 	histo_t kq = gauss_legendre_q.k*my_sqrt(xmu);
+	
 	histo_t pk_dt_q,pk_tt_q,pk_dt_kq,pk_tt_kq;
 	find_pk(pk_dt,&q,&pk_dt_q,1,precision_mu.interpol);
 	find_pk(pk_dt,&kq,&pk_dt_kq,1,precision_mu.interpol);
 	find_pk(pk_tt,&q,&pk_tt_q,1,precision_mu.interpol);
 	find_pk(pk_tt,&kq,&pk_tt_kq,1,precision_mu.interpol);
+
+	kernel[0] = x[2] * (mu[2]-1.) / 2. * pk_dt_kq * pk_dt_q; // n,a,b = 1,1,1
+	kernel[1] = 3.*x[2] * power(mu[2]-1.,2) / 8. * pk_dt_kq * pk_tt_q; // n,a,b = 1,1,2
+	kernel[2] = 3.*x[4] * power(mu[2]-1.,2) / xmu / 8. * pk_tt_kq * pk_dt_q; // n,a,b = 1,2,1
+	kernel[3] = 5.*x[4] * power(mu[2]-1.,3) / xmu / 16. * pk_tt_kq * pk_tt_q; // n,a,b = 1,2,2
 	
-	kernel[0] = x[2] * (mu[2]-1.) / 2. * pk_dt_q * pk_dt_kq;
-	kernel[1] = 3.*x[2] * power(mu[2]-1.,2) / 8. * pk_dt_q * pk_tt_kq;
-	kernel[2] = 3.*x[4] * power(mu[2]-1.,2) / xmu / 8. * pk_tt_q * pk_dt_kq;
-	kernel[3] = 5.*x[4] * power(mu[2]-1.,3) / xmu / 16. * pk_tt_q * pk_tt_kq;
-	kernel[4] = x[1] * (x[1]+2.*mu[1]-3.*x[1]*mu[2]) / 2. * pk_dt_q * pk_dt_kq;
-	kernel[5] = - 3.*x[1] * (mu[2]-1.) * (-x[1]-2.*mu[1]+5.*x[1]*mu[2]) / 4. * pk_dt_q * pk_tt_kq;
-	kernel[6] = 3.*x[2] * (mu[2]-1.) * (-2.+x[2]+6.*x[1]*mu[1]-5.*x[2]*mu[2]) / xmu / 4. * pk_tt_q * pk_dt_kq;
-	kernel[7] = - 3.*x[2] * power(mu[2]-1.,2) * (6.-5.*x[2]-30.*x[1]*mu[1]+35.*x[2]*mu[2]) / xmu / 16. * pk_tt_q * pk_tt_kq;
-	kernel[8] = x[1] * (4.*mu[1]*(3.-5.*mu[2]) + x[1]*(3.-30.*mu[2]+35.*mu[4])) / 8. * pk_dt_q * pk_tt_kq;
-	kernel[9] = x[1] * (-8.*mu[1] + x[1]*(-12.+36.*mu[2]+12.*x[1]*mu[1]*(3.-5.*mu[2]) + x[2]*(3.-30.*mu[2]+35.*mu[4]))) / xmu / 8. * pk_tt_q * pk_dt_kq;
-	kernel[10] = 3.*x[1] * (mu[2]-1.) * (-8.*mu[1] + x[1]*(-12.+60.*mu[2]+20.*x[1]*mu[1]*(3.-7.*mu[2])+5.*x[2]*(1.-14.*mu[2]+21.*mu[4]))) / xmu / 16. * pk_tt_q * pk_tt_kq;
-	kernel[11] = x[1] * (8.*mu[1]*(-3.+5.*mu[2]) - 6.*x[1]*(3.-30.*mu[2]+35.*mu[4]) + 6.*x[2]*mu[1]*(15.-70.*mu[2]+63*mu[4]) + x[3]*(5.-21.*mu[2]*(5.-15.*mu[2]+11.*mu[4]))) / xmu / 16. * pk_tt_q * pk_tt_kq;
+	kernel[4] = x[1] * (x[1]+2.*mu[1]-3.*x[1]*mu[2]) / 2. * pk_dt_kq * pk_dt_q; // n,a,b = 2,1,1
+	kernel[5] = - 3.*x[1] * (mu[2]-1.) * (-x[1]-2.*mu[1]+5.*x[1]*mu[2]) / 4. * pk_dt_kq * pk_tt_q; // n,a,b = 2,1,2
+	kernel[6] = 3.*x[2] * (mu[2]-1.) * (-2.+x[2]+6.*x[1]*mu[1]-5.*x[2]*mu[2]) / xmu / 4. * pk_tt_kq * pk_dt_q; // n,a,b = 2,2,1
+	kernel[7] = - 3.*x[2] * power(mu[2]-1.,2) * (6.-5.*x[2]-30.*x[1]*mu[1]+35.*x[2]*mu[2]) / xmu / 16. * pk_tt_kq * pk_tt_q; // n,a,b = 2,2,2
+	
+	kernel[8] = x[1] * (4.*mu[1]*(3.-5.*mu[2]) + x[1]*(3.-30.*mu[2]+35.*mu[4])) / 8. * pk_dt_kq * pk_tt_q; // n,a,b = 3,1,2
+	kernel[9] = x[1] * (-8.*mu[1] + x[1]*(-12.+36.*mu[2]+12.*x[1]*mu[1]*(3.-5.*mu[2]) + x[2]*(3.-30.*mu[2]+35.*mu[4]))) / xmu / 8. * pk_tt_kq * pk_dt_q; // n,a,b = 3,2,1
+	kernel[10] = 3.*x[1] * (mu[2]-1.) * (-8.*mu[1] + x[1]*(-12.+60.*mu[2]+20.*x[1]*mu[1]*(3.-7.*mu[2])+5.*x[2]*(1.-14.*mu[2]+21.*mu[4]))) / xmu / 16. * pk_tt_kq * pk_tt_q; // n,a,b = 3,2,2
+	
+	kernel[11] = x[1] * (8.*mu[1]*(-3.+5.*mu[2]) - 6.*x[1]*(3.-30.*mu[2]+35.*mu[4]) + 6.*x[2]*mu[1]*(15.-70.*mu[2]+63*mu[4]) + x[3]*(5.-21.*mu[2]*(5.-15.*mu[2]+11.*mu[4]))) / xmu / 16. * pk_tt_kq * pk_tt_q; // n,a,b = 4,2,2
 	
 	size_t ii;
 	for (ii=0;ii<NCOMP;ii++) kernel[ii] *= x[1]/xmu;

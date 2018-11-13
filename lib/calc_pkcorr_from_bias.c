@@ -12,7 +12,7 @@ static Precision precision_q = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
 static Precision precision_mu = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
 
 
-histo_t kernel_pkcorr_bias(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
+histo_t kernel_pkcorr_bias_1loop(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
 {
 	histo_t x = gauss_legendre_q.x[iq];
 	histo_t k = gauss_legendre_q.k;
@@ -29,23 +29,23 @@ histo_t kernel_pkcorr_bias(FLAG a,size_t iq, histo_t mu, kernel_bias kernel)
 }
 
 
-void set_precision_bias_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
+void set_precision_bias_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
 	set_precision(&precision_q,n_,min_,max_,interpol_);
 }
 
-void set_precision_bias_mu(size_t n_,char* interpol_)
+void set_precision_bias_1loop_mu(size_t n_,char* interpol_)
 {
 	set_precision(&precision_mu,n_,-1.,1.,interpol_);
 }
 
-void init_bias()
+void init_bias_1loop()
 {
 	init_gauss_legendre_q(&gauss_legendre_q,&precision_q);
 	init_gauss_legendre_mu(&gauss_legendre_mu,&precision_mu);
 }
 
-void free_bias()
+void free_bias_1loop()
 {
 	free_gauss_legendre_q(&gauss_legendre_q);
 	free_gauss_legendre_mu(&gauss_legendre_mu);
@@ -66,7 +66,7 @@ static _Bool set_mu_range(histo_t x, _Bool run_half)
 	return 1;
 }
 
-histo_t calc_pkcorr_from_bias(FLAG a, histo_t k, kernel_bias kernel, _Bool run_half)
+histo_t calc_pkcorr_from_bias_1loop(FLAG a, histo_t k, kernel_bias kernel, _Bool run_half)
 {
 
 	update_gauss_legendre_q(&gauss_legendre_q,k);
@@ -81,7 +81,7 @@ histo_t calc_pkcorr_from_bias(FLAG a, histo_t k, kernel_bias kernel, _Bool run_h
 		histo_t integ_bias=0;
 		size_t imu,nmu=gauss_legendre_mu.nmu;
 		
-		for (imu=0;imu<nmu;imu++) integ_bias +=  kernel_pkcorr_bias(a,iq,gauss_legendre_mu.mu[imu],kernel) * gauss_legendre_mu.w[imu];
+		for (imu=0;imu<nmu;imu++) integ_bias +=  kernel_pkcorr_bias_1loop(a,iq,gauss_legendre_mu.mu[imu],kernel) * gauss_legendre_mu.w[imu];
 		
 		histo_t x3w = x*x*x*gauss_legendre_q.w[iq];
 		if (run_half) x3w *= 2.;
