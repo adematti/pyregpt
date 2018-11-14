@@ -7,14 +7,14 @@
 #include "kernels.h"
 
 static histo_t k,logqmin,logqmax;
+static const Precision precision_q_default = {.n=0,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=0,.min=5e-4,.max=10.,.interpol=POLY};
 static FLAG a,b;
 #pragma omp threadprivate(k)
-//#pragma omp threadprivate(k,logqmin,logqmax,precision_q,a,b)
 
 void set_precision_gamma3_tree_q(histo_t min_,histo_t max_,char* interpol_)
 {
-	set_precision(&precision_q,0,min_,max_,interpol_);
+	set_precision(&precision_q,0,min_,max_,interpol_,&precision_q_default);
 }
 
 void init_gamma3_tree()

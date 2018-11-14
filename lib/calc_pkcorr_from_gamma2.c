@@ -8,7 +8,9 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
+static const Precision precision_q_default = {.n=200,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=200,.min=5e-4,.max=10.,.interpol=POLY};
+static const Precision precision_mu_default = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 static Precision precision_mu = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 
 histo_t gamma2_tree(FLAG a, histo_t k1, histo_t k2, histo_t k3)
@@ -83,12 +85,12 @@ void kernel_pkcorr_gamma2_tree(FLAG a,FLAG b,size_t iq, histo_t mu, histo_t *ker
 
 void set_precision_gamma2_tree_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	set_precision(&precision_q,n_,min_,max_,interpol_);
+	set_precision(&precision_q,n_,min_,max_,interpol_,&precision_q_default);
 }
 
 void set_precision_gamma2_tree_mu(size_t n_,char* interpol_)
 {
-	set_precision(&precision_mu,n_,-1.,1.,interpol_);
+	set_precision(&precision_mu,n_,1.,-1.,interpol_,&precision_mu_default);
 }
 
 void init_gamma2_tree()

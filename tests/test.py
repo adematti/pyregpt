@@ -37,11 +37,11 @@ def save_reference_terms_bias_1loop():
 	k = pyregpt.pk_lin['k'][(pyregpt.pk_lin['k'] > 0.1)]
 	pyregpt.set_terms(k)
 	pyregpt.run_terms(nthreads=nthreads)
-	scipy.savetxt('ref_terms_bias_1loop.dat',scipy.concatenate([pyregpt[key][:,None] for key in pyregpt.FIELDS],axis=-1))
+	scipy.savetxt('self_terms_bias_1loop.dat',scipy.concatenate([pyregpt[key][:,None] for key in pyregpt.FIELDS],axis=-1))
 
 def load_reference_terms_bias_1loop():
 	dtype = [(key,'f8') for key in Bias1Loop.FIELDS]
-	ref = scipy.loadtxt('ref_terms_bias_1loop.dat',dtype=dtype)
+	ref = scipy.loadtxt('self_terms_bias_1loop.dat',dtype=dtype)
 	return ref
 
 def save_reference_terms_A_1loop():
@@ -51,11 +51,11 @@ def save_reference_terms_A_1loop():
 	k = pyregpt.pk_lin['k'][(pyregpt.pk_lin['k'] > 0.1)]
 	pyregpt.set_terms(k)
 	pyregpt.run_terms(nthreads=nthreads)
-	scipy.savetxt('ref_terms_A_1loop.dat',scipy.concatenate([pyregpt['k'][:,None],pyregpt['A']],axis=-1))
+	scipy.savetxt('self_terms_A_1loop.dat',scipy.concatenate([pyregpt['k'][:,None],pyregpt['A']],axis=-1))
 
 def load_reference_terms_A_1loop():
 	dtype = [('k','f8'),('A',('f8',5))]
-	ref = scipy.loadtxt('ref_terms_A_1loop.dat',dtype=dtype)
+	ref = scipy.loadtxt('self_terms_A_1loop.dat',dtype=dtype)
 	return ref
 
 def save_reference_terms_A_2loop():
@@ -69,12 +69,18 @@ def save_reference_terms_A_2loop():
 	pyregpt.set_precision(calculation='gamma2_1loop_q',min=-2,max=-1.,n=300)
 	pyregpt.set_precision(calculation='A_2loop_q',min=-2,max=-1.)
 	pyregpt.run_terms(nthreads=nthreads)
-	scipy.savetxt('ref_terms_A_2loop.dat',scipy.concatenate([pyregpt['k'][:,None],pyregpt['A']],axis=-1))
+	scipy.savetxt('self_terms_A_2loop.dat',scipy.concatenate([pyregpt['k'][:,None],pyregpt['A']],axis=-1))
 
-def load_reference_terms_A_2loop():
+def load_reference_terms_A_2loop(self=True):
 	dtype = [('k','f8'),('A',('f8',5))]
-	ref = scipy.loadtxt('ref_terms_A_2loop.dat',dtype=dtype)
-	return ref
+	if self:
+		ref = scipy.loadtxt('self_terms_A_2loop.dat',dtype=dtype)
+		return ref
+	else:
+		ref_I = scipy.loadtxt('ref_terms_A_2loop_I_sd.dat',dtype=dtype)
+		ref_II = scipy.loadtxt('ref_terms_A_2loop_II_sd.dat',dtype=dtype)
+		ref_I['A'] += ref_II['A']
+		return ref_I[200:220:10]
 
 def load_reference_terms_B_2loop():
 	dtype = [('k','f8'),('B',('f8',9))]
@@ -182,9 +188,9 @@ def test_terms_2loop(a='delta',b='delta'):
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	for key in pyregpt.FIELDS:
 		if key in ref.dtype.names:
-			print scipy.absolute(pyregpt[key]/ref[key]-1).max()
 			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
 			print('{} {} {} ok'.format(a,b,key))
+	pyregpt.set_precision(calculation='all_q',n=700,interpol='poly')
 
 
 def test_spectrum_2loop(a='delta',b='delta'):
@@ -305,18 +311,18 @@ def test_copy():
 	pyregpt = PyRegPT()
 	k,pklin = load_pklin()
 	pyregpt.set_pk_lin(k,pklin)
-	cp = pyregpt.pk_lin.copy()
-	dcp = pyregpt.pk_lin.deepcopy()
-	pyregpt.pk_lin.pk_lin[0] *= 2.
-	assert cp.pk_lin[0] == pyregpt.pk_lin.pk_lin[0]
-	assert dcp.pk_lin[0] == pyregpt.pk_lin.pk_lin[0]/2.
+	cp = pyregpt.copy()
+	dcp = pyregpt.deepcopy()
+	pyregpt.pk_lin['pk'][0] *= 2.
+	assert cp.pk_lin['pk'][0] == pyregpt.pk_lin['pk'][0]
+	assert dcp.pk_lin['pk'][0] == pyregpt.pk_lin['pk'][0]/2.
 
 def plot_pk_lin():
 	from matplotlib import pyplot
 	k,pklin = load_pklin()
 	pyregpt = PyRegPT()
 	pyregpt.set_pk_lin(k,pklin)
-	kout = scipy.logspace(scipy.log10(k[0])-1,scipy.log10(k[-1])+1,1000,base=10)
+	kout = scipy.logspace(scipy.log10(k[0])-2,scipy.log10(k[-1])+1,1000,base=10)
 	for interpol in ['lin','poly']:
 		pyplot.loglog(kout,pyregpt.find_pk_lin(kout,interpol=interpol),label=interpol)
 	pyplot.legend()
@@ -330,28 +336,25 @@ save_reference_terms_A_1loop()
 save_reference_terms_A_2loop()
 save_reference_terms_bias_1loop()
 """
-"""
+
 test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
 test_sigma_v2()
-test_terms_1loop(a='delta',b='theta')
+#test_terms_1loop(a='delta',b='theta')
 test_all_1loop()
-test_terms_2loop(a='delta',b='theta')
+#test_terms_2loop(a='delta',b='theta')
 test_all_2loop()
 test_precision()
-"""
-"""
 test_A_1loop()
 test_A_2loop()
 test_B_2loop()
 test_bias_1loop()
-"""
-"""
+
 test_pad()
 test_copy()
 plot_pk_lin()
-"""
+
 
 """
 def debug():

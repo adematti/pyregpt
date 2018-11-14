@@ -6,6 +6,7 @@
 
 static GaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
+static const Precision precision_q_default = {.n=500,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=500,.min=5e-4,.max=10.,.interpol=POLY};
 
 histo_t beta(FLAG a, histo_t q1, histo_t q2) {
@@ -136,7 +137,7 @@ histo_t gamma1_2loop(FLAG a,histo_t k)
 
 void set_precision_gamma1_2loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	set_precision(&precision_q,n_,min_,max_,interpol_);
+	set_precision(&precision_q,n_,min_,max_,interpol_,&precision_q_default);
 }
 
 void init_gamma1_2loop()

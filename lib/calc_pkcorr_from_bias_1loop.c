@@ -8,9 +8,10 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
+static const Precision precision_q_default = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
 static Precision precision_q = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
+static const Precision precision_mu_default = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
 static Precision precision_mu = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
-
 
 histo_t kernel_pkcorr_bias_1loop(FLAG a,size_t iq, histo_t mu, kernel_bias_1loop kernel)
 {
@@ -31,12 +32,12 @@ histo_t kernel_pkcorr_bias_1loop(FLAG a,size_t iq, histo_t mu, kernel_bias_1loop
 
 void set_precision_bias_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	set_precision(&precision_q,n_,min_,max_,interpol_);
+	set_precision(&precision_q,n_,min_,max_,interpol_,&precision_q_default);
 }
 
 void set_precision_bias_1loop_mu(size_t n_,char* interpol_)
 {
-	set_precision(&precision_mu,n_,-1.,1.,interpol_);
+	set_precision(&precision_mu,n_,1.,-1.,interpol_,&precision_mu_default);
 }
 
 void init_bias_1loop()

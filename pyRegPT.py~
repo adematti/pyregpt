@@ -4,6 +4,7 @@ import os
 import ctypes
 import scipy
 import functools
+import copy
 from numpy import ctypeslib
 """
 def transfer_nowiggle(k,h=0.676,omega_b=0.022,omega_m=0.21,T_cmb=2.7255,Omega_m=None,Omega_b=None,**kwargs):
@@ -63,9 +64,8 @@ def damping_factor(npk=1):
 class Terms(object):
 
 	SHAPE = {}
-	
+
 	def __init__(self,columns={},fields=None):
-	
 		super(Terms, self).__init__()
 		self.columns = {}
 		if fields is None:
@@ -73,21 +73,21 @@ class Terms(object):
 		else:
 			for key in fields:
 				self.columns[key] = columns[key]
-	
+
 	@property
 	def fields(self):
 		return self.columns.keys()
-		
+
 	def __len__(self):
 		return len(self['k'])
 
 	@property
 	def size(self):
 		return len(self)
-		
+
 	def __str__(self):
 		return str(self.__dict__)
-	
+
 	def __getitem__(self,name):
 		if isinstance(name,(str,unicode)):
 			if name in self.fields:
@@ -105,7 +105,7 @@ class Terms(object):
 				tmp = getattr(self,key)
 				tmp[name] = item
 				setattr(self,key,tmp)
-			
+	
 	def	__contains__(self,name):
 		if name in self.columns: return True
 		return False
@@ -113,19 +113,18 @@ class Terms(object):
 	def as_dict(self,fields=None):
 		if fields is None: fields = self.fields
 		return {field:self[field] for field in fields}
-	
+
 	def copy(self):
 		new = self.__class__()
 		new.__dict__.update(self.__dict__)
 		return new
-		
+
 	def deepcopy(self):
-		import copy
 		new = self.__class__()
 		#new.__dict__.update(copy.deepcopy(self.__dict__))
 		for key in self.fields: new.columns[key] = self.columns[key].copy()
 		return new
-	
+
 	def pad_k(self,k,mode='constant',constant_values=0.,**kwargs):
 		pad_start = scipy.sum(k<self['k'][0])
 		pad_end = scipy.sum(k>self['k'][-1])
@@ -137,13 +136,13 @@ class Terms(object):
 		for key in kwargs:
 			self[key][:pad_start] = kwargs[key][:pad_start]
 			self[key][-pad_end:] = kwargs[key][-pad_end:]
-	
+
 	def nan_to_zero(self):
 		for key in self.FIELDS: self[key][scipy.isnan(self[key])] = 0.
-		
+
 	def rescale(self,scale=1.):
 		for key in self.fields: self[key] *= scale**(2*self.SCALE[key])
-		
+
 	def zeros(self,k,dtype=ctypes.c_double):
 	
 		self['k'] = scipy.asarray(k,dtype=dtype).flatten()
@@ -152,22 +151,22 @@ class Terms(object):
 			if key in self.SHAPE: self[key] = scipy.zeros((self.size,)+tuple(self.SHAPE[key]),dtype=self.C_TYPE).flatten()
 			else: self[key] = scipy.zeros((self.size,),dtype=self.C_TYPE)
 
-		
 class TermsPkLin(Terms):
 
 	FIELDS = ['k','pk']
 	SCALE = {'k':0,'pk':1}
-	
+
 	@scale_factor(1)
 	def Plin(self):
 		return self['pk']
+	
 
-class PyRegPT(object):
+class PyRegPT(Terms):
 
 	C_TYPE = ctypes.c_double
 	#PATH_CUBA = os.path.join(os.getenv('CUBA'),'libcuba.so')
 	PATH_REGPT = os.path.join(os.path.dirname(os.path.realpath(__file__)),'regpt.so')
-	
+
 	def __init__(self):
 
 		super(PyRegPT, self).__init__()
@@ -176,52 +175,52 @@ class PyRegPT(object):
 		self.pk_lin = TermsPkLin()
 
 	def nodes_weights_gauss_legendre(self,xmin,xmax,nx):
-		
+
 		x = scipy.empty((nx),dtype=self.C_TYPE)
 		w = scipy.empty((nx),dtype=self.C_TYPE)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(nx,))
 		self.regpt.nodes_weights_gauss_legendre.argtypes = (self.C_TYPE,self.C_TYPE,pointer,pointer,ctypes.c_size_t)
 		self.regpt.nodes_weights_gauss_legendre(xmin,xmax,x,w,nx)
-		
+
 		return x,w
-		
+
 	def interpol_poly(self,x,tabx,taby):
-		
+
 		nx = len(tabx)
 		assert nx == len(taby)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(nx,))
 		self.regpt.interpol_poly.argtypes = (self.C_TYPE,pointer,pointer,ctypes.c_size_t)
 		self.regpt.interpol_poly.restype = self.C_TYPE
 		return self.regpt.interpol_poly(x,tabx,taby,nx)
-	
+
 	def interpol_lin(self,x,tabx,taby):
-		
+
 		self.regpt.interpol_lin.argtypes = (self.C_TYPE,)*5
 		self.regpt.interpol_lin.restype = self.C_TYPE
 		return self.regpt.interpol_lin(x,tabx[0],tabx[-1],taby[0],taby[-1])
-	
+
 	def find_pk_lin(self,k,interpol='poly'):
-	
+
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
 		pk = scipy.zeros_like(k)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
 		self.regpt.find_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t,ctypes.c_size_t)
 		self.regpt.find_pk_lin(k,pk,len(k),1 if interpol=='poly' else 0)
-		
+
 		return pk
-	
+
 	def calc_running_sigma_v2(self,k,uvcutoff=0.5):
-		
+
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
 		sigma_v2 = scipy.zeros_like(k)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
 		self.regpt.calc_running_sigma_v2.argtypes = (pointer,pointer,ctypes.c_size_t,self.C_TYPE)
 		self.regpt.calc_running_sigma_v2(k,sigma_v2,len(k),uvcutoff)
-		
+
 		return sigma_v2
-	
+
 	def set_pk_lin(self,k,pk):
-		
+
 		self.pk_lin['k'] = scipy.asarray(k,dtype=self.C_TYPE).flatten()
 		self.pk_lin['pk'] = scipy.asarray(pk,dtype=self.C_TYPE).flatten()
 
@@ -229,14 +228,18 @@ class PyRegPT(object):
 		self.regpt.set_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t)
 		self.regpt.set_pk_lin(self.pk_lin['k'],self.pk_lin['pk'],self.pk_lin.size)
 
-	def set_precision(self,calculation='allq',n=0,min=1.,max=-1.,interpol='test'):
+	def set_precision(self,calculation='all_q',n=0,min=1.,max=-1.,interpol='test'):
 	
+		if calculation == 'all':
+			for calculation in ['all_q','all_mu']:
+				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
+			return
 		if calculation == 'all_q':
-			for calculation in ['spectrum_2loop_q','bias_q','A_2loop_q','B_q']:
+			for calculation in ['spectrum_2loop_q','bias_1loop_q','A_2loop_q','B_q']:
 				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
 			return
 		if calculation == 'all_mu':
-			for calculation in ['gamma2_tree_mu','bias_mu','A_2loop_I_mu','B_mu']:
+			for calculation in ['gamma2_tree_mu','bias_1loop_mu','A_2loop_I_mu','B_mu']:
 				self.set_precision(calculation,n=n,min=min,max=max,interpol=interpol)
 			return
 		if calculation == 'spectrum_1loop_q':
@@ -271,26 +274,32 @@ class PyRegPT(object):
 		else:
 			func.argtypes = (ctypes.c_size_t,self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
 			func(n,min,max,interpol)
-			
+
 	def set_running_uvcutoff(self,calculation='all',uvcutoff=0.5):
 
 		if calculation=='all':
-			for calculation in ['spectrum_1loop','spectrum_2loop','bispectrum_1loop','bias']:
+			for calculation in ['spectrum_1loop','spectrum_2loop','bispectrum_1loop','bias_1loop']:
 				self.set_running_uvcutoff(calculation,uvcutoff=uvcutoff)
 			return
 		func = getattr(self.regpt,'set_running_uvcutoff_'+calculation)
 		func.argtypes = (self.C_TYPE,)
 		func(uvcutoff)
 
+	def deepcopy(self):
+		new = super(PyRegPT, self).deepcopy()
+		new.pk_lin = self.pk_lin.deepcopy()
+		return new
+
+	def __del__(self):
+		#To reset all precision settings
+		self.set_precision(calculation='all',n=0,min=1.,max=-1.,interpol='test')
+		self.set_running_uvcutoff(calculation='all')
+
 class Spectrum1Loop(PyRegPT,Terms):
 
 	FIELDS = ['k','pk_lin','sigma_v2','G1a_1loop','G1b_1loop','pkcorr_G2_tree_tree']
 	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'G1a_1loop':1,'G1b_1loop':1,'pkcorr_G2_tree_tree':2}
-	
-	def __init__(self):
 
-		super(Spectrum1Loop,self).__init__()
-	
 	def set_terms(self,k):
 		
 		super(Spectrum1Loop,self).zeros(k=k,dtype=self.C_TYPE)
@@ -298,16 +307,16 @@ class Spectrum1Loop(PyRegPT,Terms):
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.size,))
 		self.regpt.set_terms_spectrum_1loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
 		self.regpt.set_terms_spectrum_1loop(self.size,*[self[key] for key in self.FIELDS])
-	
+
 	def run_terms(self,a='delta',b='delta',nthreads=8):
 		
 		self.regpt.run_terms_spectrum_1loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
 		self.regpt.run_terms_spectrum_1loop(a,b,nthreads)
-	
+
 	@scale_factor(1)
 	def Plin(self):
 		return self['pk_lin']
-	
+
 	def P1loop(self,Dgrowth=1.,sigmav2=None):
 		#Dgrowth is Dgrowth or sigma8...
 		#Taruya 2012 (arXiv 1208.1191v1) eq 24
@@ -324,10 +333,6 @@ class Spectrum2Loop(Spectrum1Loop):
 
 	FIELDS = ['k','pk_lin','sigma_v2','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree']
 	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'G1a_1loop':1,'G1a_2loop':2,'G1b_1loop':1,'G1b_2loop':2,'pkcorr_G2_tree_tree':2,'pkcorr_G2_tree_1loop':3,'pkcorr_G2_1loop_1loop':4,'pkcorr_G3_tree':3}
-	
-	def __init__(self):
-
-		super(Spectrum2Loop,self).__init__()
 	
 	def set_terms(self,k):
 		
@@ -360,10 +365,6 @@ class Bias1Loop(PyRegPT,Terms):
 
 	FIELDS = ['k','pk_lin','sigma_v2','pkbias_b2d','pkbias_bs2d','pkbias_b2t','pkbias_bs2t','pkbias_b22','pkbias_b2s2','pkbias_bs22','sigma3sq']
 	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'pkbias_b2d':2,'pkbias_bs2d':2,'pkbias_b2t':2,'pkbias_bs2t':2,'pkbias_b22':2,'pkbias_b2s2':2,'pkbias_bs22':2,'sigma3sq':2}
-	
-	def __init__(self):
-
-		super(Bias1Loop,self).__init__()
 	
 	@scale_factor(1)
 	def Plin(self):
@@ -418,13 +419,13 @@ class Bias1Loop(PyRegPT,Terms):
 		super(Bias1Loop,self).zeros(k=k,dtype=self.C_TYPE)
 		
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.size,))
-		self.regpt.set_terms_bias.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
-		self.regpt.set_terms_bias(self.size,*[self[key] for key in self.FIELDS])
+		self.regpt.set_terms_bias_1loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
+		self.regpt.set_terms_bias_1loop(self.size,*[self[key] for key in self.FIELDS])
 		
 	def run_terms(self,nthreads=8):
 		
-		self.regpt.run_terms_bias.argtypes = (ctypes.c_size_t,)
-		self.regpt.run_terms_bias(nthreads)
+		self.regpt.run_terms_bias_1loop.argtypes = (ctypes.c_size_t,)
+		self.regpt.run_terms_bias_1loop(nthreads)
 
 class A1Loop(PyRegPT,Terms):
 	

@@ -49,8 +49,6 @@ histo_t interpol_lin(histo_t x,histo_t xmin,histo_t xmax,histo_t ymin,histo_t ym
 
 histo_t interpol_poly(histo_t x,histo_t *tabx,histo_t *taby,size_t nx);
 
-histo_t extrapol_pk(Pk pkin,histo_t k);
-
 histo_t extrapol_pk_lin(histo_t k);
 
 void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
@@ -77,9 +75,9 @@ void free_gauss_legendre_mu(GaussLegendreMu *gauss_legendre);
 
 // precision setters
 
-void set_interpol(INTERPOL *current,char *newi);
+_Bool set_interpol(INTERPOL *current,char *newi);
 
-void set_precision(Precision *precision,size_t n,histo_t min,histo_t max,char *interpol);
+_Bool set_precision(Precision *precision,size_t n,histo_t min,histo_t max,char *interpol,const Precision *precision_default);
 
 // gamma1
 
@@ -145,13 +143,13 @@ void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_
 
 // bias
 
-void set_precision_bias_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
+void set_precision_bias_1loop_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
-void set_precision_bias_mu(size_t n_,char* interpol_);
+void set_precision_bias_1loop_mu(size_t n_,char* interpol_);
 
-void init_bias();
+void init_bias_1loop();
 
-void free_bias();
+void free_bias_1loop();
 
 typedef histo_t (kernel_bias_1loop)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
 

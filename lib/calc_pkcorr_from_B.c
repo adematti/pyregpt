@@ -14,7 +14,9 @@ static Pk pk_dt,pk_tt;
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
+static const Precision precision_q_default = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
+static const Precision precision_mu_default = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 static Precision precision_mu = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 
 static void kernel_B(size_t iq,histo_t mu_,histo_t *kernel)
@@ -24,7 +26,7 @@ static void kernel_B(size_t iq,histo_t mu_,histo_t *kernel)
 	histo_t xmu = 1.+x[2]-2.*mu[1]*x[1];
 	histo_t q = gauss_legendre_q.q[iq];
 	histo_t kq = gauss_legendre_q.k*my_sqrt(xmu);
-	
+
 	histo_t pk_dt_q,pk_tt_q,pk_dt_kq,pk_tt_kq;
 	find_pk(pk_dt,&q,&pk_dt_q,1,precision_mu.interpol);
 	find_pk(pk_dt,&kq,&pk_dt_kq,1,precision_mu.interpol);
@@ -54,12 +56,12 @@ static void kernel_B(size_t iq,histo_t mu_,histo_t *kernel)
 
 void set_precision_B_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	set_precision(&precision_q,n_,min_,max_,interpol_);
+	set_precision(&precision_q,n_,min_,max_,interpol_,&precision_q_default);
 }
 
 void set_precision_B_mu(size_t n_,char* interpol_)
 {
-	set_precision(&precision_mu,n_,-1.,1.,interpol_);
+	set_precision(&precision_mu,n_,1.,-1.,interpol_,&precision_mu_default);
 }
 
 void init_B(Pk pk_dt_,Pk pk_tt_)

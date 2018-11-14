@@ -49,10 +49,6 @@ histo_t interpol_lin(histo_t x,histo_t xmin,histo_t xmax,histo_t ymin,histo_t ym
 
 histo_t interpol_poly(histo_t x,histo_t *tabx,histo_t *taby,size_t nx);
 
-histo_t extrapol_pk(Pk pkin,histo_t k);
-
-histo_t extrapol_pk_lin(histo_t k);
-
 void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
 
 void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
@@ -77,9 +73,9 @@ void free_gauss_legendre_mu(GaussLegendreMu *gauss_legendre);
 
 // precision setters
 
-void set_interpol(INTERPOL *current,char *newi);
+_Bool set_interpol(INTERPOL *current,char *newi);
 
-void set_precision(Precision *precision,size_t n,histo_t min,histo_t max,char *interpol);
+_Bool set_precision(Precision *precision,size_t n,histo_t min,histo_t max,char *interpol,const Precision *precision_default);
 
 // gamma1
 

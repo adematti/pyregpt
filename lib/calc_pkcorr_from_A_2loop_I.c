@@ -13,7 +13,9 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
+static const Precision precision_q_default = {.n=300,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=300,.min=5e-4,.max=10.,.interpol=POLY};
+static const Precision precision_mu_default = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 static Precision precision_mu = {.n=10,.min=-1.,.max=1.,.interpol=POLY};
 
 void kernel_projection_A_tA(histo_t x, histo_t mu, histo_t* kernel_A, histo_t* kernel_tA)
@@ -66,12 +68,12 @@ static void kernel_A_tA_2loop_I(size_t iq, histo_t mu, histo_t* kernel_A_tA)
 
 void set_precision_A_2loop_I_q(size_t n_,histo_t min_,histo_t max_,char* interpol_)
 {
-	set_precision(&precision_q,n_,min_,max_,interpol_);
+	set_precision(&precision_q,n_,min_,max_,interpol_,&precision_q_default);
 }
 
 void set_precision_A_2loop_I_mu(size_t n_,char* interpol_)
 {
-	set_precision(&precision_mu,n_,-1.,1.,interpol_);
+	set_precision(&precision_mu,n_,1.,-1.,interpol_,&precision_mu_default);
 }
 
 void init_A_2loop_I()
