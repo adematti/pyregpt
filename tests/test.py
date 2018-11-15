@@ -190,10 +190,10 @@ def test_A_B():
 	pyregpt = PyRegPT()
 	k,pklin = load_pklin()
 	pyregpt.set_pk_lin(k,pklin)
-	pyregpt.set_k_A_B(pyregpt.pk_lin.k)
+	pyregpt.set_k_A_B([1e-1,2e-1])
 	pyregpt.run_A_B(nthreads=nthreads)
 	pyregpt.terms_A_B.PA()
-	#for key in pyregpt.KEYS_A_B: print key,pyregpt.terms_A_B[key]
+	for key in pyregpt.terms_A_B.FIELDS: print key,pyregpt.terms_A_B[key]
 	
 def test_copy():
 	pyregpt = PyRegPT()
@@ -220,7 +220,8 @@ def plot_pk_lin():
 	pyplot.show()
 	
 
-test_2loop(a='delta',b='theta')
+#test_2loop(a='delta',b='theta')
+test_A_B()
 
 """
 test_gauss_legendre()
