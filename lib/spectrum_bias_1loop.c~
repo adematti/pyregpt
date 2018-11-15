@@ -83,7 +83,7 @@ void run_terms_bias_1loop(size_t num_threads)
 {
 
 #ifdef _VERBOSE
-	printf("*** Calculation of bias terms at 1 loop\n");
+	printf("*** Calculation of bias terms\n");
 #endif //_VERBOSE
 	set_num_threads(num_threads);
 	size_t ik=0;

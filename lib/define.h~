@@ -77,13 +77,13 @@ typedef struct {
 	histo_t* k;
 	histo_t* pk_lin;
 	histo_t* sigma_v2;
-	histo_t* pk_b2d;
-	histo_t* pk_bs2d;
-	histo_t* pk_b2t;
-	histo_t* pk_bs2t;
-	histo_t* pk_b22;
-	histo_t* pk_b2s2;
-	histo_t* pk_bs22;
+	histo_t* pkbias_b2d;
+	histo_t* pkbias_bs2d;
+	histo_t* pkbias_b2t;
+	histo_t* pkbias_bs2t;
+	histo_t* pkbias_b22;
+	histo_t* pkbias_b2s2;
+	histo_t* pkbias_bs22;
 	histo_t* sigma3sq;
 } TermsBias;
 
