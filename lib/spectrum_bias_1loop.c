@@ -99,7 +99,7 @@ void run_terms_bias_1loop(size_t num_threads)
 		for (ik=0;ik<terms_bias.nk;ik++) {
 			histo_t k = terms_bias.k[ik];
 #ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - Computation done at %zu percent.\n",ik*STEP_VERBOSE/step_verbose);
+			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
 			terms_bias.pk_b2d[ik] = calc_pkcorr_from_bias_1loop(DELTA,k,kernel_b2,1);
 			//terms_bias.pk_b2d[ik] = calc_pkcorr_from_bias_1loop(DELTA,k,kernel_b2,0);

@@ -176,14 +176,6 @@ histo_t extrapol_pk_highk(Pk pkin,histo_t k)
 	return pkin.pk[end]*my_pow((k/pkin.k[end]),n_eff);
 }
 
-/*
-histo_t extrapol_pk_lin(histo_t k)
-{
-	if (k<=pk_lin.k[0]) return extrapol_pk_lowk(pk_lin,k);
-	return extrapol_pk_highk(pk_lin,k);
-}
-*/
-
 void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 {
 	size_t ik;

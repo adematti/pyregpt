@@ -105,7 +105,7 @@ void run_terms_spectrum_1loop(char* a_,char* b_,size_t num_threads)
 	timer(1);
 #endif //_VERBOSE
 #ifdef _DEBUG
-	write_terms_spectrum_1loop("debug_terms_spectrum_1loop.dat");
+	write_terms_spectrum_1loop("debug_1loop.dat");
 #endif //_DEBUG
 }
 

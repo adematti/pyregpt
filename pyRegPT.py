@@ -39,14 +39,15 @@ def scale_factor(npk=1):
 def damping_factor(npk=1):
 	def _decorate(func):
 		@functools.wraps(func)				
-		def wrapper(self,Dgrowth=1.,sigmav2=None,*args,**kwargs):
-			factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigmav2 is None else sigmav2)
+		def wrapper(self,Dgrowth=1.,sigma_v2=None,*args,**kwargs):
+			factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigma_v2 is None else sigma_v2)
 			return Dgrowth**(2*npk)*scipy.exp(-npk*factor)*(1.+factor)**npk*func(self,*args,**kwargs)
 		return wrapper
 	return _decorate
 
 class Terms(object):
 
+	FIELDS = []
 	SHAPE = {}
 
 	def __init__(self,**kwargs):
@@ -74,7 +75,7 @@ class Terms(object):
 			else:
 				raise KeyError('Term {} does not exist.'.format(name))
 		else:
-			return self.__class__({key:self.columns[key][name] for key in self.fields})	
+			return self.__class__(**{key:self.columns[key][name] for key in self.fields})	
 	
 	def __setitem__(self,name,item):
 		if isinstance(name,(str,unicode)):
@@ -88,8 +89,15 @@ class Terms(object):
 	def	__contains__(self,name):
 		if name in self.columns: return True
 		return False
-		
-	def as_dict(self,fields=None):
+	
+	def __iter__(self):
+		for field in self.FIELDS:
+			if field in self.fields: yield field
+	
+	def tolist(self):
+		return [self[key] for key in self]
+	
+	def getstate(self,fields=None):
 		if fields is None: fields = self.fields
 		return {field:self[field] for field in fields}
 
@@ -195,13 +203,13 @@ class PyRegPT(Terms):
 
 	C_TYPE = ctypes.c_double
 	#pkTH_CUBA = os.path.join(os.getenv('CUBA'),'libcuba.so')
-	pkTH_REGPT = os.path.join(os.path.dirname(os.path.realpath(__file__)),'regpt.so')
+	PATH_REGPT = os.path.join(os.path.dirname(os.path.realpath(__file__)),'regpt.so')
 
 	def __init__(self,*args,**kwargs):
 
 		super(PyRegPT, self).__init__(*args,**kwargs)
 		#cuba = ctypes.CDLL(self.pkTH_CUBA,mode=ctypes.RTLD_GLOBAL)
-		self.regpt = ctypes.CDLL(self.pkTH_REGPT,mode=ctypes.RTLD_GLOBAL)
+		self.regpt = ctypes.CDLL(self.PATH_REGPT,mode=ctypes.RTLD_GLOBAL)
 
 	def nodes_weights_gauss_legendre(self,xmin,xmax,nx):
 
@@ -326,8 +334,13 @@ class PyRegPT(Terms):
 		new = super(PyRegPT,self).deepcopy()
 		new.spectrum_lin = self.spectrum_lin.deepcopy()
 		return new
+			
+	def pad_k(self,k,mode='constant',constant_values=0.,interpol='poly'):
+		super(PyRegPT,self).pad_k(k,mode=mode,constant_values=constant_values)
+		if 'pk_lin' in self.FIELDS: self['pk_lin'] = self.find_pk_lin(self.k,interpol=interpol)
+		if 'sigma_v2' in self.FIELDS: self['sigma_v2'] = self.calc_running_sigma_v2(self.k)
 
-	def __del__(self):
+	def clear(self):
 		#To reset all precision settings
 		self.set_precision(calculation='all',n=0,min=1.,max=-1.,interpol='test')
 		self.set_running_uvcutoff(calculation='all')
@@ -342,7 +355,7 @@ class Spectrum1Loop(PyRegPT):
 		self.zeros(k=k,dtype=self.C_TYPE)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.size,))
 		self.regpt.set_terms_spectrum_1loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
-		self.regpt.set_terms_spectrum_1loop(self.size,*[self[key] for key in self.FIELDS])
+		self.regpt.set_terms_spectrum_1loop(self.size,*self.tolist())
 
 	def run_terms(self,a='delta',b='delta',nthreads=8):
 		
@@ -375,17 +388,17 @@ class Spectrum2Loop(Spectrum1Loop):
 		self.zeros(k=k,dtype=self.C_TYPE)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.size,))
 		self.regpt.set_terms_spectrum_2loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
-		self.regpt.set_terms_spectrum_2loop(self.size,*[self[key] for key in self.FIELDS])
+		self.regpt.set_terms_spectrum_2loop(self.size,*self.tolist())
 	
 	def run_terms(self,a='delta',b='delta',nthreads=8):
 		
 		self.regpt.run_terms_spectrum_2loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
 		self.regpt.run_terms_spectrum_2loop(a,b,nthreads)
 	
-	def pk(self,Dgrowth=1.,sigmav2=None):
+	def pk(self,Dgrowth=1.,sigma_v2=None):
 		#Dgrowth is Dgrowth or sigma8...
 		#Taruya 2012 (arXiv 1208.1191v1) eq 24
-		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigmav2 is None else sigmav2)
+		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_v2'] if sigma_v2 is None else sigma_v2)
 		G1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1a_1loop']*(1. + factor) + Dgrowth**4*self['G1a_2loop'])
 		G1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['G1b_1loop']*(1. + factor) + Dgrowth**4*self['G1b_2loop'])
 		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
@@ -395,6 +408,7 @@ class Spectrum2Loop(Spectrum1Loop):
 		#Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
 		pkcorr_G3 = Dgrowth**6 * scipy.exp(-2. * factor) * self['pkcorr_G3_tree']
 		return pkcorr_G1 + pkcorr_G2 + pkcorr_G3
+		#return pkcorr_G1 + pkcorr_G2 + pkcorr_G3
 		
 class Bias1Loop(PyRegPT):
 
@@ -448,13 +462,21 @@ class Bias1Loop(PyRegPT):
 	@damping_factor(2)
 	def pk_bs22_damp(self):
 		return self['pk_bs22']
+	
+	def shotnoise(self,kmin=5e-4,kmax=10.):
+		ones = scipy.ones_like(self.k)
+		mask = self.k>kmax
+		ones[mask] *= scipy.exp(-(self.k[mask]/kmax-1)**2)
+		mask = self.k<kmin
+		ones[mask] *= scipy.exp(-(kmin/self.k[mask]-1)**2)
+		return ones
 		
 	def set_terms(self,k):
 		
 		self.zeros(k=k,dtype=self.C_TYPE)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.size,))
 		self.regpt.set_terms_bias_1loop.argtypes = (ctypes.c_size_t,)+(pointer,)*len(self.FIELDS)
-		self.regpt.set_terms_bias_1loop(self.size,*[self[key] for key in self.FIELDS])
+		self.regpt.set_terms_bias_1loop(self.size,*self.tolist())
 		
 	def run_terms(self,nthreads=8):
 		
@@ -480,7 +502,7 @@ class A1Loop(PyRegPT):
 		self.zeros(k=k,dtype=self.C_TYPE)
 		pointers = [ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self[key].size,)) for key in self.FIELDS]
 		self.regpt.set_terms_A_1loop.argtypes = (ctypes.c_size_t,)+tuple(pointers)
-		self.regpt.set_terms_A_1loop(self.size,*[self[key] for key in self.FIELDS])
+		self.regpt.set_terms_A_1loop(self.size,*self.tolist())
 		
 	def run_terms(self,nthreads=8):
 		
@@ -508,16 +530,15 @@ class A2Loop(A1Loop):
 		self.zeros(k=k,dtype=self.C_TYPE)
 		pointers = [ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self[key].size,)) for key in self.FIELDS]
 		self.regpt.set_terms_A_2loop.argtypes = (ctypes.c_size_t,)+tuple(pointers)
-		self.regpt.set_terms_A_2loop(self.size,*[self[key] for key in self.FIELDS])
+		self.regpt.set_terms_A_2loop(self.size,*self.tolist())
 		self.reshape()
 		
 	def run_terms(self,nthreads=8):
 		
 		self.regpt.run_terms_A_2loop.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_A_2loop(nthreads)
-		
 
-class B2Loop(PyRegPT):
+class B1Loop(PyRegPT):
 
 	FIELDS = ['k','pk_lin','sigma_v2','pk']
 	SCALE = {'k':0,'pk_lin':1,'sigma_v2':1,'pk':2}
@@ -536,12 +557,15 @@ class B2Loop(PyRegPT):
 		self.zeros(k=k,dtype=self.C_TYPE)
 		pointers = [ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self[key].size,)) for key in self.FIELDS]
 		self.regpt.set_terms_B.argtypes = (ctypes.c_size_t,)+tuple(pointers)
-		self.regpt.set_terms_B(self.size,*[self[key] for key in self.FIELDS])
-		
+		self.regpt.set_terms_B(self.size,*self.tolist())
 		self.reshape()
 		
 	def run_terms(self,nthreads=8):
 		
+		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
+		self.regpt.set_spectra_B.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t,pointer,pointer)
+		self.regpt.set_spectra_B('delta','theta',self.spectrum_lin.size,self.spectrum_lin.k,self.spectrum_lin['pk'])
+		self.regpt.set_spectra_B('theta','theta',self.spectrum_lin.size,self.spectrum_lin.k,self.spectrum_lin['pk'])
 		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_B(nthreads)
 	
@@ -562,3 +586,35 @@ class B2Loop(PyRegPT):
 			+mu6*beta3*scipy.interp(k,self['k'],pk[6],left=0.,right=0.) \
 			+mu6*beta4*scipy.interp(k,self['k'],pk[7],left=0.,right=0.) \
 			+mu8*beta4*scipy.interp(k,self['k'],pk[8],left=0.,right=0.)
+
+class B2Loop(B1Loop):
+	
+	
+	def run_terms(self,nthreads=8):
+		
+		self.spectrum_1loop_dt = Spectrum1Loop()
+		self.spectrum_1loop_dt.set_terms(self.spectrum_lin.k)
+		self.spectrum_1loop_dt.run_terms(a='delta',b='theta',nthreads=nthreads)
+
+		self.spectrum_1loop_tt = Spectrum1Loop()
+		self.spectrum_1loop_tt.set_terms(self.spectrum_lin.k)
+		self.spectrum_1loop_tt.run_terms(a='theta',b='theta',nthreads=nthreads)
+		
+		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
+		self.regpt.set_spectra_B.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t,pointer,pointer)
+		
+		pk_dt = self.spectrum_1loop_dt.pk() #why do I need to do that?
+		pk_tt = self.spectrum_1loop_tt.pk()
+		
+		self.regpt.set_spectra_B('delta','theta',self.spectrum_lin.size,self.spectrum_lin.k,pk_dt)
+		self.regpt.set_spectra_B('theta','theta',self.spectrum_lin.size,self.spectrum_lin.k,pk_tt)
+			
+		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
+		self.regpt.run_terms_B(nthreads)
+	
+	"""
+	def run_terms(self,nthreads=8):
+
+		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
+		self.regpt.run_terms_B(nthreads)
+	"""

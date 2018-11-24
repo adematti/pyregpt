@@ -60,7 +60,7 @@ void run_terms_A_1loop(size_t num_threads)
 		for (ik=0;ik<terms_A.nk;ik++) {
 			histo_t k = terms_A.k[ik];
 #ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - Computation done at %zu percent.\n",ik*STEP_VERBOSE/step_verbose);
+			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
 			calc_pkcorr_from_A_1loop(k,&(terms_A.A[ik*NCOMP]));
 		}

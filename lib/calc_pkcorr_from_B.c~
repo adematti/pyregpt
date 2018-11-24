@@ -111,8 +111,8 @@ void calc_pkcorr_from_B(histo_t k,histo_t* pkcorr_B)
 			histo_t w = gauss_legendre_mu.w[imu];
 			for (ii=0;ii<NCOMP;ii++) integ_B[ii] += kernel[ii]*w;
 		}
-		histo_t xw = x*gauss_legendre_q.w[iq];
-		for (ii=0;ii<NCOMP;ii++) pkcorr_B[ii] += integ_B[ii]*xw; 
+		histo_t w = gauss_legendre_q.w[iq];
+		for (ii=0;ii<NCOMP;ii++) pkcorr_B[ii] += integ_B[ii]*w; 
 	}
 	
 	histo_t factor = k*k*k / (2.*M_PI*M_PI);

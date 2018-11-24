@@ -397,18 +397,18 @@ void timer(size_t i)
 		relbeg=omp_get_wtime();
 	else if(i==1) {
 		relend=omp_get_wtime();
-		printf("    Relative time ellapsed %.1f ms\n",1000*(relend-relbeg));
+		printf(" - relative time ellapsed %.1f ms\n",1000*(relend-relbeg));
 	}    
 	else if(i==2) {
 		relend=omp_get_wtime();
-		printf("    Relative time ellapsed %.1f ms\n",1000*(relend-relbeg));
+		printf(" - relative time ellapsed %.1f ms\n",1000*(relend-relbeg));
 		relbeg=omp_get_wtime();
 	}
 	else if(i==4)
 		absbeg=omp_get_wtime();
 	else if(i==5) {
 		absend=omp_get_wtime();
-		printf("    Total time ellapsed %.1f ms \n",1000*(absend-absbeg));
+		printf(" - total time ellapsed %.1f ms \n",1000*(absend-absbeg));
 	}
 #else //_HAVE_OMP
 	int diff;
@@ -418,13 +418,13 @@ void timer(size_t i)
 	else if(i==1) {
 		relend=time(NULL);
 		diff=(int)(difftime(relend,relbeg));
-		printf("    Relative time ellapsed %02d:%02d:%02d \n",
+		printf(" - relative time ellapsed %02d:%02d:%02d \n",
 		 diff/3600,(diff/60)%60,diff%60);
 	}    
 	else if(i==2) {
 		relend=time(NULL);
 		diff=(size_t)(difftime(relend,relbeg));
-		printf("    Relative time ellapsed %02d:%02d:%02d \n",
+		printf(" - relative time ellapsed %02d:%02d:%02d \n",
 		 diff/3600,(diff/60)%60,diff%60);
 		relbeg=time(NULL);
 	}
@@ -433,7 +433,7 @@ void timer(size_t i)
 	else if(i==5) {
 		absend=time(NULL);
 		diff=(size_t)(difftime(absend,absbeg));
-		printf("    Total time ellapsed %02d:%02d:%02d \n",
+		printf(" - total time ellapsed %02d:%02d:%02d \n",
 		 diff/3600,(diff/60)%60,diff%60);
 	}
 #endif //_HAVE_OMP

@@ -46,7 +46,7 @@ void print_flags(FLAG a,FLAG b)
 
 void set_num_threads(size_t num_threads)
 {
-	cubaaccel(0,1000); //default values
+	cubaaccel(0,1000);
 	if (num_threads>0) {
 		omp_set_num_threads(num_threads);
 		cubacores(num_threads,10000);

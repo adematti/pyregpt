@@ -185,7 +185,7 @@ void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_
 }
 */
 
-#define NCOMP 1
+
 #define NDIM 5
 #define USERDATA NULL
 #define NVEC 1

@@ -121,9 +121,6 @@ void run_terms_B(size_t num_threads)
 		free_spectra = 1; 
 		run_spectra_B_1loop(num_threads);
 	}
-#ifdef _DEBUG
-	write_spectra_B("debug_spectra_B.dat");
-#endif //_DEBUG
 #pragma omp parallel default(none) shared(terms_B,step_verbose,pk_dt,pk_tt) private(ik,pkcorr_B)
 	{
 		init_B(pk_dt,pk_tt);

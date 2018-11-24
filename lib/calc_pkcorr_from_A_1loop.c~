@@ -10,10 +10,10 @@
 static GaussLegendreQ gauss_legendre_q;
 static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
-static const Precision precision_q_default = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
-static Precision precision_q = {.n=600,.min=-1.,.max=-1.,.interpol=POLY};
-static const Precision precision_mu_default = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
-static Precision precision_mu = {.n=300,.min=-1.,.max=1.,.interpol=POLY};
+static const Precision precision_q_default = {.n=2000,.min=-1.,.max=-1.,.interpol=POLY};
+static Precision precision_q = {.n=2000,.min=-1.,.max=-1.,.interpol=POLY};
+static const Precision precision_mu_default = {.n=20,.min=-1.,.max=1.,.interpol=POLY};
+static Precision precision_mu = {.n=200,.min=-1.,.max=1.,.interpol=POLY};
 
 void kernel_A_tA_1loop(size_t iq, histo_t mu_, histo_t pk_k, histo_t *kernel)
 {
@@ -34,7 +34,7 @@ void kernel_A_tA_1loop(size_t iq, histo_t mu_, histo_t pk_k, histo_t *kernel)
 	kernel_A[0] = -x[3]/7.*(mu[1]+6*mu[3]+x[2]*mu[1]*(-3+10*mu[2])+x[1]*(-3+mu[2]-12*mu[4]));			// m,n = 1,1
 	kernel_A[1] = x[4]/14.*(mu[2]-1)*(-1+7*x[1]*mu[1]-6*mu[2]);											// m,n = 1,2
 	kernel_A[2] = x[3]/14.*(x[2]*mu[1]*(13-41*mu[2])-4*(mu[1]+6*mu[3])+x[1]*(5+9*mu[2]+42*mu[4]));		// m,n = 2,2
-	kernel_A[3] = kernel[1];																			// m,n = 2,3
+	kernel_A[3] = kernel_A[1];																			// m,n = 2,3
 	kernel_A[4] = x[3]/14.*(1-7*x[1]*mu[1]+6*mu[2])*(-2*mu[1]+x[1]*(-1+3*mu[2]));						// m,n = 3,3
 	
 	kernel_tA[0] = 1./7.*(mu[1]+x[1]-2*x[1]*mu[2])*(3*x[1]+7*mu[1]-10*x[1]*mu[2]);
@@ -118,6 +118,7 @@ static _Bool set_mu_range(histo_t x)
 	return 1;
 }
 
+
 void calc_pkcorr_from_A_1loop(histo_t k, histo_t* pkcorr_A)
 {
 	update_gauss_legendre_q(&gauss_legendre_q,k);
@@ -129,7 +130,8 @@ void calc_pkcorr_from_A_1loop(histo_t k, histo_t* pkcorr_A)
 		
 	for (iq=0;iq<nq;iq++) {
 
-		if (!set_mu_range(gauss_legendre_q.x[iq])) continue;
+		histo_t x = gauss_legendre_q.x[iq];
+		if (!set_mu_range(x)) continue;
 		
 		histo_t integ_A_tA[NCOMP]={0.};
 		histo_t kernel_A_tA[NCOMP];
@@ -142,11 +144,50 @@ void calc_pkcorr_from_A_1loop(histo_t k, histo_t* pkcorr_A)
 		}
 		histo_t integ_a[NCOMP];
 		kernel_a_1loop(iq, pk_k, integ_a);
-		histo_t w = gauss_legendre_q.w[iq];
-		for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += (integ_A_tA[ii]+integ_a[ii])*w; 
+		histo_t xw = x*gauss_legendre_q.w[iq]; //xw because integration in dlog(x)
+		for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += (integ_A_tA[ii]+integ_a[ii])*xw; 
+		//for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += integ_A_tA[ii]*xw; 
 	}
 	
 	histo_t factor = k*k*k / (4.*M_PI*M_PI);
 	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] *= factor;
 
 }
+
+
+/*
+void calc_pkcorr_from_A_1loop(histo_t k, histo_t* pkcorr_A)
+{
+	update_gauss_legendre_q(&gauss_legendre_q,k);
+	histo_t pk_k;
+	find_pk_lin(&k,&pk_k,1,precision_q.interpol);
+	
+	size_t ii,iq,nq=gauss_legendre_q.nq;
+	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] = 0.;
+		
+	for (iq=0;iq<nq;iq++) {
+
+		histo_t x = gauss_legendre_q.x[iq];
+		if (!set_mu_range(x)) continue;
+		
+		histo_t integ_A_tA[NCOMP]={0.};
+		histo_t kernel_A_tA[NCOMP];
+		histo_t kernel_a[NCOMP];
+		size_t imu,nmu=gauss_legendre_mu.nmu;	
+	
+		for (imu=0;imu<nmu;imu++) {
+			kernel_A_tA_1loop(iq, gauss_legendre_mu.mu[imu], pk_k, kernel_A_tA);
+			kernel_a_1loop(iq, pk_k, kernel_a);
+			histo_t w = gauss_legendre_mu.w[imu];
+			for (ii=0;ii<NCOMP;ii++) integ_A_tA[ii] += (kernel_A_tA[ii]+kernel_a[ii]/2.)*w;
+		}
+		histo_t xw = x*gauss_legendre_q.w[iq];
+		for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += integ_A_tA[ii]*xw; 
+	}
+	
+	histo_t factor = k*k*k / (4.*M_PI*M_PI);
+	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] *= factor;
+}
+*/
+
+
