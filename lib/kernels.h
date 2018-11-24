@@ -1,5 +1,5 @@
-#ifndef _REGPT_KERNELS_
-#define _REGPT_KERNELS_
+#ifndef _REgammaPT_KERNELS_
+#define _REgammaPT_KERNELS_
 
 histo_t F2_sym_fast(FLAG a, histo_t p2, histo_t q2, histo_t pq);
 
@@ -27,4 +27,4 @@ histo_t F3(FLAG a_, histo_t* p, histo_t* q, histo_t* r);
 
 histo_t F3_sym(FLAG a, histo_t* p, histo_t* q, histo_t* r);
 
-#endif //_REGPT_KERNELS_
+#endif //_REgammaPT_KERNELS_

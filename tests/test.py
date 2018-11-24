@@ -9,19 +9,55 @@ from pyregpt import *
 nthreads = 8
 
 def load_pklin():
-
 	return scipy.loadtxt('ref_pk_lin.dat',unpack=True)
-	
-def load_reference_terms_2loop(a='delta',b='theta'):
-	dtype = ['k','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree','sigma_v2']
-	dtype = [(key,'f8') for key in dtype]
-	ref = scipy.loadtxt('ref_terms_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
-	return ref
 
-def load_reference_spectrum_2loop(a='delta',b='theta'):
-	dtype = ['k','pk_nowiggle','pk_lin','pk','error','Dgrowth']
-	dtype = [(key,'f8') for key in dtype]
-	ref = scipy.loadtxt('ref_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
+def save_reference_terms_spectrum_2loop():
+	pyregpt = Spectrum2Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	k = pyregpt.spectrum_lin.k[(pyregpt.spectrum_lin.k > 0.1)][:10]
+	pyregpt.set_terms(k)
+	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
+	for a in ['delta','theta']:
+		for b in ['delta','theta']:
+			pyregpt.run_terms(a,b,nthreads=nthreads)
+			scipy.savetxt('self_terms_spectrum_2loop_{}_{}.dat'.format(a,b),scipy.concatenate([pyregpt[key][:,None] for key in pyregpt],axis=-1))
+	pyregpt.clear()
+
+def load_reference_terms_spectrum_2loop(a='delta',b='theta',self=True):
+	if self:
+		dtype = [(key,'f8') for key in Spectrum2Loop.FIELDS]
+		ref = scipy.loadtxt('self_terms_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
+	else:
+		dtype = ['k','gamma1a_1loop','gamma1a_2loop','gamma1b_1loop','gamma1b_2loop','pkcorr_gamma2_tree_tree','pkcorr_gamma2_tree_1loop','pkcorr_gamma2_1loop_1loop','pkcorr_gamma3_tree','sigma_d2']
+		dtype = [(key,'f8') for key in dtype]
+		ref = scipy.loadtxt('ref_terms_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)[200:280:10] #gamma3 integration is routine has been updated since RegPT
+	return ref
+	
+def save_reference_spectrum_2loop():
+	pyregpt = Spectrum2Loop()
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	k = pyregpt.spectrum_lin.k[(pyregpt.spectrum_lin.k > 0.1)][:10]
+	pyregpt.set_terms(k)
+	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
+	for a in ['delta','theta']:
+		for b in ['delta','theta']:
+			pyregpt.run_terms(a,b,nthreads=nthreads)
+			Dgrowth = scipy.random.uniform(0.5,2.)*scipy.ones_like(pyregpt.k)
+			pk = pyregpt.pk(Dgrowth)
+			pk_lin = pyregpt.pk_lin(Dgrowth)
+			scipy.savetxt('self_spectrum_2loop_{}_{}.dat'.format(a,b),scipy.asarray([pyregpt.k,pk_lin,pk,Dgrowth]).T)
+	pyregpt.clear()
+
+def load_reference_spectrum_2loop(a='delta',b='theta',self=True):
+	if self:
+		dtype = [(key,'f8') for key in ['k','pk_lin','pk','Dgrowth']]
+		ref = scipy.loadtxt('self_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
+	else:
+		dtype = ['k','pk_nowiggle','pk_lin','pk','error','Dgrowth']
+		dtype = [(key,'f8') for key in dtype]
+		ref = scipy.loadtxt('ref_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)[200:280:10] #gamma3 integration is routine has been updated since RegPT
 	return ref
 
 def load_reference_spectrum_1loop(a='delta',b='theta'):
@@ -80,7 +116,7 @@ def load_reference_terms_A_2loop(self=True):
 		ref = scipy.loadtxt('self_terms_A_2loop.dat',dtype=dtype)
 		return ref
 	else:
-		ref_I = scipy.loadtxt('ref_terms_A_2loop_I_sd.dat',dtype=dtype)
+		ref_I = scipy.loadtxt('ref_terms_A_2loop_I_sd.dat',dtype=dtype) #the way we calculate sigmad2 is different (RegPT: interpolation, pyRegPT: recalculation)
 		ref_II = scipy.loadtxt('ref_terms_A_2loop_II_sd.dat',dtype=dtype)
 		ref_I['pk'] += ref_II['pk']
 		return ref_I[200:220:10]
@@ -151,13 +187,13 @@ def test_interpol_poly():
 		for x,y in zip(tabx,taby):
 			assert pyregpt.interpol_poly(x,tabx,taby)==y
 
-def test_sigma_v2():
+def test_sigma_d2():
 	k,pklin = load_pklin()
 	pyregpt = PyRegPT()
 	pyregpt.set_pk_lin(k,pklin)
 	newk = scipy.concatenate([k,[k[-1]*2.,k[-1]*3.]],axis=-1)
-	sigma_v2 = pyregpt.calc_running_sigma_v2(newk)
-	assert sigma_v2[-2] == sigma_v2[-1]
+	sigma_d2 = pyregpt.calc_running_sigma_d2(newk)
+	assert sigma_d2[-2] == sigma_d2[-1]
 
 	
 def test_terms_1loop(a='delta',b='delta'):
@@ -165,7 +201,7 @@ def test_terms_1loop(a='delta',b='delta'):
 	pyregpt = Spectrum1Loop()
 	pyregpt.set_precision(calculation='spectrum_1loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_terms_2loop(a,b)[20:40]
+	ref = load_reference_terms_spectrum_2loop(a,b)[20:40]
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	for key in pyregpt:
@@ -200,11 +236,10 @@ def test_terms_2loop(a='delta',b='delta'):
 
 	k,pklin = load_pklin()
 	pyregpt = Spectrum2Loop()
-	#pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	pyregpt.set_precision(calculation='spectrum_2loop_q',min=k[0],max=k[-1])
 	pyregpt.set_pk_lin(k,pklin)
 	
-	ref = load_reference_terms_2loop(a,b)[200:240]
+	ref = load_reference_terms_spectrum_2loop(a,b)
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	for key in pyregpt:
@@ -218,9 +253,9 @@ def test_terms_2loop(a='delta',b='delta'):
 def test_spectrum_2loop(a='delta',b='delta'):
 	k,pklin = load_pklin()
 	pyregpt = Spectrum2Loop()
-	#pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
+	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_spectrum_2loop(a,b)[20:30]
+	ref = load_reference_spectrum_2loop(a,b)
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	pk_lin = pyregpt.pk_lin(Dgrowth=ref['Dgrowth'][0])
@@ -334,7 +369,7 @@ def test_pad(a='delta',b='delta'):
 	k,pklin = load_pklin()
 	pyregpt = Spectrum2Loop()
 	pyregpt.set_pk_lin(k,pklin)
-	ref = load_reference_terms_2loop(a,b)[20:40]
+	ref = load_reference_terms_spectrum_2loop(a,b)
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	bak = pyregpt.deepcopy()
@@ -387,16 +422,18 @@ save_reference_terms_A_1loop()
 save_reference_terms_A_2loop()
 save_reference_terms_B_1loop()
 save_reference_terms_bias_1loop()
+save_reference_spectrum_2loop()
+save_reference_terms_spectrum_2loop()
 """
 
 test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
-test_sigma_v2()
-#test_terms_1loop(a='delta',b='theta')
+test_sigma_d2()
+test_terms_1loop(a='delta',b='theta')
 test_all_1loop()
-#test_terms_2loop(a='delta',b='theta')
-#test_all_2loop()
+test_terms_2loop(a='delta',b='theta')
+test_all_2loop()
 test_precision()
 test_A_1loop()
 test_A_2loop()

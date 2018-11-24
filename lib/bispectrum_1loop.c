@@ -11,52 +11,52 @@
 static INTERPOL interpol_pk_lin = POLY;
 static histo_t uvcutoff = 0.5;
 
-void gamma1_reg_1loop(histo_t k, histo_t p, histo_t kp, histo_t sigmav2k, histo_t sigmav2p, histo_t sigmav2kp, histo_t* G1d_k, histo_t* G1t_k, histo_t* G1d_p, histo_t* G1t_p, histo_t* G1d_kp, histo_t* G1t_kp)
+void gamma1_reg_1loop(histo_t k, histo_t p, histo_t kp, histo_t sigmad2k, histo_t sigmad2p, histo_t sigmad2kp, histo_t* gamma1d_k, histo_t* gamma1t_k, histo_t* gamma1d_p, histo_t* gamma1t_p, histo_t* gamma1d_kp, histo_t* gamma1t_kp)
 {
 	if(k>=1e-2) {
-		*G1d_k = 1. + k*k*sigmav2k/2. + gamma1_1loop(DELTA,k);
-        *G1t_k = 1. + k*k*sigmav2k/2. + gamma1_1loop(THETA,k);
+		*gamma1d_k = 1. + k*k*sigmad2k/2. + gamma1_1loop(DELTA,k);
+        *gamma1t_k = 1. + k*k*sigmad2k/2. + gamma1_1loop(THETA,k);
 	}
 	else {
-		*G1d_k = 1.;
-		*G1t_k = 1.;
+		*gamma1d_k = 1.;
+		*gamma1t_k = 1.;
 	}
 	if ((p>=1e-2)&&(k>=1e-2)) {
-		*G1d_p = 1. + p*p*sigmav2p/2. + gamma1_1loop(DELTA,p);
-        *G1t_p = 1. + p*p*sigmav2p/2. + gamma1_1loop(THETA,p);
+		*gamma1d_p = 1. + p*p*sigmad2p/2. + gamma1_1loop(DELTA,p);
+        *gamma1t_p = 1. + p*p*sigmad2p/2. + gamma1_1loop(THETA,p);
 	}
 	else {
-		*G1d_p = 1.;
-		*G1t_p = 1.;
+		*gamma1d_p = 1.;
+		*gamma1t_p = 1.;
 	}
 	if ((kp>=3e-2)&&(k>=1e-2)) {
-		*G1d_kp = 1. + kp*kp*sigmav2kp/2. + gamma1_1loop(DELTA,kp);
-        *G1t_kp = 1. + kp*kp*sigmav2kp/2. + gamma1_1loop(THETA,kp);
+		*gamma1d_kp = 1. + kp*kp*sigmad2kp/2. + gamma1_1loop(DELTA,kp);
+        *gamma1t_kp = 1. + kp*kp*sigmad2kp/2. + gamma1_1loop(THETA,kp);
 	}
 	else {
-		*G1d_kp = 1.;
-		*G1t_kp = 1.;
+		*gamma1d_kp = 1.;
+		*gamma1t_kp = 1.;
 	}	
 
 }
 
-void gamma2_reg_1loop(histo_t k,histo_t p,histo_t kp,histo_t sigmav2k,histo_t sigmav2p,histo_t sigmav2kp,histo_t* G2d_kp_k,histo_t* G2t_kp_k,histo_t* G2d_p_k,histo_t* G2t_p_k,histo_t* G2d_p_kp,histo_t* G2t_p_kp)
+void gamma2_reg_1loop(histo_t k,histo_t p,histo_t kp,histo_t sigmad2k,histo_t sigmad2p,histo_t sigmad2kp,histo_t* gamma2d_kp_k,histo_t* gamma2t_kp_k,histo_t* gamma2d_p_k,histo_t* gamma2t_p_k,histo_t* gamma2d_p_kp,histo_t* gamma2t_p_kp)
 {
 	if ((MAX3(kp, k, p)>=1e-2)&&(k>=1e-2)) {
-		*G2d_kp_k = gamma2_tree(DELTA, kp, k, p) * (1. + p*p*sigmav2p/2.) + gamma2d_1loop(kp, k, p);
-		*G2t_kp_k = gamma2_tree(THETA, kp, k, p) * (1. + p*p*sigmav2p/2.) + gamma2t_1loop(kp, k, p);
-   		*G2d_p_k = gamma2_tree(DELTA, p, k, kp) * (1. + kp*kp*sigmav2kp/2.) + gamma2d_1loop(p, k, kp);
-		*G2t_p_k = gamma2_tree(THETA, p, k, kp) * (1. + kp*kp*sigmav2kp/2.) + gamma2t_1loop(p, k, kp);
-		*G2d_p_kp = gamma2_tree(DELTA, p, kp, k) * (1. + k*k*sigmav2k/2.) + gamma2d_1loop(p, kp, k);
-		*G2t_p_kp = gamma2_tree(THETA, p, kp, k) * (1. + k*k*sigmav2k/2.) + gamma2t_1loop(p, kp, k);
+		*gamma2d_kp_k = gamma2_tree(DELTA, kp, k, p) * (1. + p*p*sigmad2p/2.) + gamma2d_1loop(kp, k, p);
+		*gamma2t_kp_k = gamma2_tree(THETA, kp, k, p) * (1. + p*p*sigmad2p/2.) + gamma2t_1loop(kp, k, p);
+   		*gamma2d_p_k = gamma2_tree(DELTA, p, k, kp) * (1. + kp*kp*sigmad2kp/2.) + gamma2d_1loop(p, k, kp);
+		*gamma2t_p_k = gamma2_tree(THETA, p, k, kp) * (1. + kp*kp*sigmad2kp/2.) + gamma2t_1loop(p, k, kp);
+		*gamma2d_p_kp = gamma2_tree(DELTA, p, kp, k) * (1. + k*k*sigmad2k/2.) + gamma2d_1loop(p, kp, k);
+		*gamma2t_p_kp = gamma2_tree(THETA, p, kp, k) * (1. + k*k*sigmad2k/2.) + gamma2t_1loop(p, kp, k);
 	}
 	else {
-		*G2d_kp_k = gamma2_tree(DELTA, kp, k, p);
-		*G2t_kp_k = gamma2_tree(THETA, kp, k, p);
-		*G2d_p_k = gamma2_tree(DELTA, p, k, kp);
-		*G2t_p_k = gamma2_tree(THETA, p, k, kp);
-		*G2d_p_kp = gamma2_tree(DELTA, p, kp, k);
-		*G2t_p_kp = gamma2_tree(THETA, p, kp, k);
+		*gamma2d_kp_k = gamma2_tree(DELTA, kp, k, p);
+		*gamma2t_kp_k = gamma2_tree(THETA, kp, k, p);
+		*gamma2d_p_k = gamma2_tree(DELTA, p, k, kp);
+		*gamma2t_p_k = gamma2_tree(THETA, p, k, kp);
+		*gamma2d_p_kp = gamma2_tree(DELTA, p, kp, k);
+		*gamma2t_p_kp = gamma2_tree(THETA, p, kp, k);
 	}
 }
 
@@ -97,16 +97,16 @@ void free_bispectrum_1loop_I()
 
 void bispectrum_1loop_I(histo_t k, histo_t p, histo_t kp, histo_t* b211A, histo_t* b221A, histo_t* b212A, histo_t* b222A, histo_t* b211tA, histo_t* b221tA, histo_t* b212tA, histo_t* b222tA)
 {
-	histo_t sigmav2k,sigmav2p,sigmav2kp;
-	calc_running_sigma_v2(&k,&sigmav2k,1,uvcutoff);
-	calc_running_sigma_v2(&p,&sigmav2p,1,uvcutoff);
-	calc_running_sigma_v2(&kp,&sigmav2kp,1,uvcutoff);
+	histo_t sigmad2k,sigmad2p,sigmad2kp;
+	calc_running_sigma_d2(&k,&sigmad2k,1,uvcutoff);
+	calc_running_sigma_d2(&p,&sigmad2p,1,uvcutoff);
+	calc_running_sigma_d2(&kp,&sigmad2kp,1,uvcutoff);
 	/*
-	sigmav2k = 1.;
-	sigmav2p = 1.;
-	sigmav2kp = 1.;
+	sigmad2k = 1.;
+	sigmad2p = 1.;
+	sigmad2kp = 1.;
 	*/
-	histo_t exp_factor = (k*k*sigmav2k + p*p*sigmav2p + kp*kp*sigmav2kp) / 2.;
+	histo_t exp_factor = (k*k*sigmad2k + p*p*sigmad2p + kp*kp*sigmad2kp) / 2.;
 	if (exp_factor>1e2) {
 		*b211A = 0.;
 		*b221A = 0.;
@@ -124,49 +124,49 @@ void bispectrum_1loop_I(histo_t k, histo_t p, histo_t kp, histo_t* b211A, histo_
 	find_pk_lin(&p,&pk_p,1,interpol_pk_lin);
 	find_pk_lin(&kp,&pk_kp,1,interpol_pk_lin);
 	
-	histo_t G1d_k, G1t_k, G1d_p, G1t_p, G1d_kp, G1t_kp;
-	gamma1_reg_1loop(k, p, kp, sigmav2k, sigmav2p, sigmav2kp, &G1d_k, &G1t_k, &G1d_p, &G1t_p, &G1d_kp, &G1t_kp);
-	histo_t G2d_kp_k, G2t_kp_k, G2d_p_k, G2t_p_k, G2d_p_kp, G2t_p_kp;
-	gamma2_reg_1loop(k, p, kp, sigmav2k, sigmav2p, sigmav2kp, &G2d_kp_k, &G2t_kp_k, &G2d_p_k, &G2t_p_k, &G2d_p_kp, &G2t_p_kp);
+	histo_t gamma1d_k, gamma1t_k, gamma1d_p, gamma1t_p, gamma1d_kp, gamma1t_kp;
+	gamma1_reg_1loop(k, p, kp, sigmad2k, sigmad2p, sigmad2kp, &gamma1d_k, &gamma1t_k, &gamma1d_p, &gamma1t_p, &gamma1d_kp, &gamma1t_kp);
+	histo_t gamma2d_kp_k, gamma2t_kp_k, gamma2d_p_k, gamma2t_p_k, gamma2d_p_kp, gamma2t_p_kp;
+	gamma2_reg_1loop(k, p, kp, sigmad2k, sigmad2p, sigmad2kp, &gamma2d_kp_k, &gamma2t_kp_k, &gamma2d_p_k, &gamma2t_p_k, &gamma2d_p_kp, &gamma2t_p_kp);
 
-	*b211A = 2. * ( G2t_kp_k * G1d_kp * G1d_k * pk_kp * pk_k
-			+ G2d_p_k * G1t_p * G1d_k * pk_p * pk_k
-			+ G2d_p_kp * G1t_p * G1d_kp * pk_p * pk_kp )
+	*b211A = 2. * ( gamma2t_kp_k * gamma1d_kp * gamma1d_k * pk_kp * pk_k
+			+ gamma2d_p_k * gamma1t_p * gamma1d_k * pk_p * pk_k
+			+ gamma2d_p_kp * gamma1t_p * gamma1d_kp * pk_p * pk_kp )
 			* exp_factor;
 			
- 	*b221A = 2. * ( G2t_kp_k * G1t_kp * G1d_k * pk_kp * pk_k
-			+ G2t_p_k * G1t_p * G1d_k * pk_p * pk_k
-			+ G2d_p_kp * G1t_p * G1t_kp * pk_p * pk_kp )
+ 	*b221A = 2. * ( gamma2t_kp_k * gamma1t_kp * gamma1d_k * pk_kp * pk_k
+			+ gamma2t_p_k * gamma1t_p * gamma1d_k * pk_p * pk_k
+			+ gamma2d_p_kp * gamma1t_p * gamma1t_kp * pk_p * pk_kp )
 			* exp_factor;
 
-	*b212A = 2. * ( G2t_kp_k * G1d_kp * G1t_k * pk_kp * pk_k
-			+ G2d_p_k * G1t_p * G1t_k * pk_p * pk_k
-			+ G2t_p_kp * G1t_p * G1d_kp * pk_p * pk_kp )
+	*b212A = 2. * ( gamma2t_kp_k * gamma1d_kp * gamma1t_k * pk_kp * pk_k
+			+ gamma2d_p_k * gamma1t_p * gamma1t_k * pk_p * pk_k
+			+ gamma2t_p_kp * gamma1t_p * gamma1d_kp * pk_p * pk_kp )
 			* exp_factor;
 
-	*b222A = 2. * ( G2t_kp_k * G1t_kp * G1t_k * pk_kp * pk_k
-			+ G2t_p_k * G1t_p * G1t_k * pk_p * pk_k
-			+ G2t_p_kp * G1t_p * G1t_kp * pk_p * pk_kp )
+	*b222A = 2. * ( gamma2t_kp_k * gamma1t_kp * gamma1t_k * pk_kp * pk_k
+			+ gamma2t_p_k * gamma1t_p * gamma1t_k * pk_p * pk_k
+			+ gamma2t_p_kp * gamma1t_p * gamma1t_kp * pk_p * pk_kp )
 			* exp_factor;
 
-	*b211tA = 2. * ( G2t_p_k * G1d_p * G1d_k * pk_p * pk_k
-			+ G2d_kp_k * G1t_kp * G1d_k * pk_kp * pk_k
-			+ G2d_p_kp * G1t_kp * G1d_p * pk_kp * pk_p )
+	*b211tA = 2. * ( gamma2t_p_k * gamma1d_p * gamma1d_k * pk_p * pk_k
+			+ gamma2d_kp_k * gamma1t_kp * gamma1d_k * pk_kp * pk_k
+			+ gamma2d_p_kp * gamma1t_kp * gamma1d_p * pk_kp * pk_p )
 			* exp_factor;
 
-	*b221tA = 2. * ( G2t_p_k * G1t_p * G1d_k * pk_p * pk_k
-			+ G2t_kp_k * G1t_kp * G1d_k * pk_kp * pk_k
-			+ G2d_p_kp * G1t_kp * G1t_p * pk_kp * pk_p )
+	*b221tA = 2. * ( gamma2t_p_k * gamma1t_p * gamma1d_k * pk_p * pk_k
+			+ gamma2t_kp_k * gamma1t_kp * gamma1d_k * pk_kp * pk_k
+			+ gamma2d_p_kp * gamma1t_kp * gamma1t_p * pk_kp * pk_p )
 			* exp_factor;
 
-	*b212tA = 2. * ( G2t_p_k * G1d_p * G1t_k * pk_p * pk_k
-			+ G2d_kp_k * G1t_kp * G1t_k * pk_kp * pk_k
-			+ G2t_p_kp * G1t_kp * G1d_p * pk_kp * pk_p )
+	*b212tA = 2. * ( gamma2t_p_k * gamma1d_p * gamma1t_k * pk_p * pk_k
+			+ gamma2d_kp_k * gamma1t_kp * gamma1t_k * pk_kp * pk_k
+			+ gamma2t_p_kp * gamma1t_kp * gamma1d_p * pk_kp * pk_p )
 			* exp_factor;
 
-	*b222tA = 2. * ( G2t_p_k * G1t_p * G1t_k * pk_p * pk_k
-			+ G2t_kp_k * G1t_kp * G1t_k * pk_kp * pk_k
-			+ G2t_p_kp * G1t_kp * G1t_p * pk_kp * pk_p )
+	*b222tA = 2. * ( gamma2t_p_k * gamma1t_p * gamma1t_k * pk_p * pk_k
+			+ gamma2t_kp_k * gamma1t_kp * gamma1t_k * pk_kp * pk_k
+			+ gamma2t_p_kp * gamma1t_kp * gamma1t_p * pk_kp * pk_p )
 			* exp_factor;
 }
 

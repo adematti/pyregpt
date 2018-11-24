@@ -5,8 +5,8 @@
 #include "common.h"
 #include "kernels.h"
 
-static GaussLegendreQ gauss_legendre_q;
-static GaussLegendreMu gauss_legendre_mu;
+static gammaaussLegendreQ gauss_legendre_q;
+static gammaaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
 static const Precision precision_q_default = {.n=2000,.min=-1.,.max=-1.,.interpol=POLY};
 static Precision precision_q = {.n=2000,.min=-1.,.max=-1.,.interpol=POLY};
@@ -67,7 +67,7 @@ static _Bool set_mu_range(histo_t x, _Bool run_half)
 	return 1;
 }
 
-histo_t calc_pkcorr_from_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half)
+histo_t calc_pkcorr_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half)
 {
 
 	update_gauss_legendre_q(&gauss_legendre_q,k);

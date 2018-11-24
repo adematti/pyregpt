@@ -10,8 +10,8 @@
 
 #define NCOMP 12
 
-static GaussLegendreQ gauss_legendre_q;
-static GaussLegendreMu gauss_legendre_mu;
+static gammaaussLegendreQ gauss_legendre_q;
+static gammaaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
 static const Precision precision_q_default = {.n=300,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=300,.min=5e-4,.max=10.,.interpol=POLY};
@@ -102,7 +102,7 @@ static _Bool set_mu_range(histo_t x)
 	return 1;
 }
 
-void calc_pkcorr_from_A_2loop_I(histo_t k,histo_t* pkcorr_A)
+void calc_pkcorr_A_2loop_I(histo_t k,histo_t* pkcorr_A)
 {
 	update_gauss_legendre_q(&gauss_legendre_q,k);
 	

@@ -4,7 +4,7 @@
 #include "define.h"
 #include "common.h"
 
-static GaussLegendreQ gauss_legendre_q;
+static gammaaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
 static const Precision precision_q_default = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
@@ -24,9 +24,9 @@ histo_t kernel_ff(histo_t x)
 		x2 = x*x;
 		kernel_ff = 6./x2 - 79. + 50.*x2 - 21.*x2*x2 + 0.75*power(1./x-x,3) * (2. + 7.*x2) * 2 * my_log(my_abs(diffx/(1.+x)));
 		kernel_ff /= 504.;
-#ifdef _DEBUG
+#ifdef _DEBUgamma
 		//printf("%.10g %.10g %.10g\n",x,6./x2 - 79. + 50.*x2 - 21.*x2*x2,0.75*power(1./x-x,3) * (2. + 7.*x2) * 2 * my_log(my_abs(diffx/(1.+x))));
-#endif //_DEBUG
+#endif //_DEBUgamma
 	}
 	return kernel_ff * x;
 }

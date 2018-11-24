@@ -1889,7 +1889,7 @@ histo_t kernel_gamma2d(histo_t k1,histo_t k2,histo_t k3,histo_t q)
 	return kernel_gamma2d_exact(k1, k2, k3, q);
 }
 
-static GaussLegendreQ gauss_legendre_q;
+static gammaaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
 static const Precision precision_q_default = {.n=100,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=100,.min=5e-4,.max=10.,.interpol=POLY};

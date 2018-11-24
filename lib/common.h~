@@ -1,5 +1,5 @@
-#ifndef _REGPT_COMMON_
-#define _REGPT_COMMON_
+#ifndef _REgammaPT_COMMON_
+#define _REgammaPT_COMMON_
 
 #define EPS 3.e-14
 
@@ -55,23 +55,23 @@ void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
 
 void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
 
-void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk,histo_t uvcutoff);
+void calc_running_sigma_d2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff);
 
 // gauss-legendre integration
 
 void nodes_weights_gauss_legendre(histo_t xmin,histo_t xmax,histo_t *x,histo_t *w,size_t n);
 
-void init_gauss_legendre_q(GaussLegendreQ *gauss_legendre,Precision *precision);
+void init_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,Precision *precision);
 
-void update_gauss_legendre_q(GaussLegendreQ *gauss_legendre,histo_t k);
+void update_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,histo_t k);
 
-void free_gauss_legendre_q(GaussLegendreQ *gauss_legendre);
+void free_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre);
 
-void init_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,Precision *precision);
+void init_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,Precision *precision);
 
-void update_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax);
+void update_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax);
 
-void free_gauss_legendre_mu(GaussLegendreMu *gauss_legendre);
+void free_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre);
 
 // precision setters
 
@@ -97,7 +97,7 @@ void free_gamma1_2loop();
 
 histo_t gamma1_2loop(FLAG a,histo_t k);
 
-void calc_pkcorr_from_gamma1_2loop(FLAG a,FLAG b,histo_t k,histo_t *G1a_1loop,histo_t *G1a_2loop,histo_t *G1b_1loop,histo_t *G1b_2loop);
+void calc_pkcorr_gamma1_2loop(FLAG a,FLAG b,histo_t k,histo_t *gamma1a_1loop,histo_t *gamma1a_2loop,histo_t *gamma1b_1loop,histo_t *gamma1b_2loop);
 
 // gamma2
 
@@ -111,7 +111,7 @@ void free_gamma2_tree();
 
 histo_t gamma2_tree(FLAG a, histo_t k1, histo_t k2, histo_t k3);
 
-void calc_pkcorr_from_gamma2_tree(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma2_tree_tree);
+void calc_pkcorr_gamma2_tree(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma2_tree_tree);
 
 void set_precision_gamma2d_1loop(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
@@ -129,7 +129,7 @@ void free_gamma2t_1loop();
 
 histo_t gamma2t_1loop(histo_t k1, histo_t k2, histo_t k3);
 
-void calc_pkcorr_from_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_G2_tree_tree,histo_t *pkcorr_G2_tree_1loop,histo_t *pkcorr_G2_1loop_1loop);
+void calc_pkcorr_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma2_tree_tree,histo_t *pkcorr_gamma2_tree_1loop,histo_t *pkcorr_gamma2_1loop_1loop);
 
 // gamma3
 
@@ -139,7 +139,7 @@ void init_gamma3_tree();
 
 void free_gamma3_tree();
 
-void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tree);
+void calc_pkcorr_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_gamma3_tree);
 
 // bias
 
@@ -153,7 +153,7 @@ void free_bias_1loop();
 
 typedef histo_t (kernel_bias_1loop)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
 
-histo_t calc_pkcorr_from_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half);
+histo_t calc_pkcorr_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half);
 
 // A 1 loop
 
@@ -165,7 +165,7 @@ void init_A_1loop();
 
 void free_A_1loop();
 
-void calc_pkcorr_from_A_1loop(histo_t k,histo_t* pkcorr_A);
+void calc_pkcorr_A_1loop(histo_t k,histo_t* pkcorr_A);
 
 // A 2 loop
 
@@ -179,7 +179,7 @@ void init_A_2loop_I();
 
 void free_A_2loop_I();
 
-void calc_pkcorr_from_A_2loop_I(histo_t k,histo_t* pkcorr_A);
+void calc_pkcorr_A_2loop_I(histo_t k,histo_t* pkcorr_A);
 
 void set_precision_A_2loop_II_III(histo_t min_,histo_t max_,char* interpol_);
 
@@ -187,7 +187,7 @@ void init_A_2loop_II_III();
 
 void free_A_2loop_II_III();
 
-void calc_pkcorr_from_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A);
+void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A);
 
 // B
 
@@ -199,7 +199,7 @@ void init_B(Pk pk_dt_,Pk pk_tt_);
 
 void free_B();
 
-void calc_pkcorr_from_B(histo_t k,histo_t* pkcorr_B);
+void calc_pkcorr_B(histo_t k,histo_t* pkcorr_B);
 
 // spectrum 1 loop
 
@@ -232,17 +232,17 @@ void set_precision_A_B_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
 void set_precision_A_B_mu(size_t n_,char* interpol_);
 
-void calc_pkcorr_from_A(histo_t k, histo_t pk_k, histo_t* A);
+void calc_pkcorr_A(histo_t k, histo_t pk_k, histo_t* A);
 
-void calc_pkcorr_from_B(histo_t k, histo_t* B);
+void calc_pkcorr_B(histo_t k, histo_t* B);
 */
 
 // IOs
 
 void timer(size_t i);
 
-void write_gauss_legendre_q(GaussLegendreQ gauss_legendre,char *fn);
+void write_gauss_legendre_q(gammaaussLegendreQ gauss_legendre,char *fn);
 
-void write_gauss_legendre_mu(GaussLegendreMu gauss_legendre,char *fn);
+void write_gauss_legendre_mu(gammaaussLegendreMu gauss_legendre,char *fn);
 
 #endif

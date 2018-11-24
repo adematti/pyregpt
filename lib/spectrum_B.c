@@ -40,12 +40,12 @@ void write_spectra_B(char *fn)
 	fclose(fr);
 }
 
-void set_terms_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* B)
+void set_terms_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_d2,histo_t* B)
 {
 	terms_B.nk = nk;
 	terms_B.k = k;
 	terms_B.pk_lin = pk_lin;
-	terms_B.sigma_v2 = sigma_v2;
+	terms_B.sigma_d2 = sigma_d2;
 	terms_B.B = B;
 	
 #ifdef _VERBOSE
@@ -114,16 +114,16 @@ void run_terms_B(size_t num_threads)
 		
 	timer(0);
 	find_pk_lin(terms_B.k,terms_B.pk_lin,terms_B.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_B.k,terms_B.sigma_v2,terms_B.nk,uvcutoff);
+	calc_running_sigma_d2(terms_B.k,terms_B.sigma_d2,terms_B.nk,uvcutoff);
 	
 	_Bool free_spectra = 0;
 	if ((pk_dt.nk==0)||(pk_tt.nk==0)) {
 		free_spectra = 1; 
 		run_spectra_B_1loop(num_threads);
 	}
-#ifdef _DEBUG
+#ifdef _DEBUgamma
 	write_spectra_B("debug_spectra_B.dat");
-#endif //_DEBUG
+#endif //_DEBUgamma
 #pragma omp parallel default(none) shared(terms_B,step_verbose,pk_dt,pk_tt) private(ik,pkcorr_B)
 	{
 		init_B(pk_dt,pk_tt);
@@ -133,7 +133,7 @@ void run_terms_B(size_t num_threads)
 #ifdef _VERBOSE
 			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
-			calc_pkcorr_from_B(k,pkcorr_B);
+			calc_pkcorr_B(k,pkcorr_B);
 			terms_B.B[ik*NCOMP] = pkcorr_B[0];					//pk_B111, mu^2 * f^2
 			terms_B.B[ik*NCOMP+1] = - (pkcorr_B[1] + pkcorr_B[2]);	//pk_B112 + pk_B121, mu^2 * f^3 
 			terms_B.B[ik*NCOMP+2] = pkcorr_B[3];				//pk_B122, mu^2 * f^4

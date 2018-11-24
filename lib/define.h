@@ -1,5 +1,5 @@
-#ifndef _REGPT_DEFINE_
-#define _REGPT_DEFINE_
+#ifndef _REgammaPT_DEFINE_
+#define _REgammaPT_DEFINE_
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b)) //Maximum of two numbers
 #define MIN(a, b) (((a) < (b)) ? (a) : (b)) //Minimum of two numbers
@@ -31,7 +31,7 @@ typedef struct {
 	histo_t *q;
 	histo_t *w;
 	histo_t *pk;
-} GaussLegendreQ;
+} gammaaussLegendreQ;
 
 typedef struct {
 	size_t nmu;
@@ -39,7 +39,7 @@ typedef struct {
 	histo_t *wref;
 	histo_t *mu;
 	histo_t *w;
-} GaussLegendreMu;
+} gammaaussLegendreMu;
 
 typedef struct {
 	size_t nk;
@@ -51,32 +51,32 @@ typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
-	histo_t* sigma_v2;
-	histo_t* G1a_1loop;
-	histo_t* G1a_2loop;
-	histo_t* G1b_1loop;
-	histo_t* G1b_2loop;
-	histo_t* pkcorr_G2_tree_tree;
-	histo_t* pkcorr_G2_tree_1loop;
-	histo_t* pkcorr_G2_1loop_1loop;
-	histo_t* pkcorr_G3_tree;
+	histo_t* sigma_d2;
+	histo_t* gamma1a_1loop;
+	histo_t* gamma1a_2loop;
+	histo_t* gamma1b_1loop;
+	histo_t* gamma1b_2loop;
+	histo_t* pkcorr_gamma2_tree_tree;
+	histo_t* pkcorr_gamma2_tree_1loop;
+	histo_t* pkcorr_gamma2_1loop_1loop;
+	histo_t* pkcorr_gamma3_tree;
 } Terms2Loop;
 
 typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
-	histo_t* sigma_v2;
-	histo_t* G1a_1loop;
-	histo_t* G1b_1loop;
-	histo_t* pkcorr_G2_tree_tree;
+	histo_t* sigma_d2;
+	histo_t* gamma1a_1loop;
+	histo_t* gamma1b_1loop;
+	histo_t* pkcorr_gamma2_tree_tree;
 } Terms1Loop;
 
 typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
-	histo_t* sigma_v2;
+	histo_t* sigma_d2;
 	histo_t* pk_b2d;
 	histo_t* pk_bs2d;
 	histo_t* pk_b2t;
@@ -91,7 +91,7 @@ typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
-	histo_t* sigma_v2;
+	histo_t* sigma_d2;
 	histo_t* A;
 } TermsA;
 
@@ -99,10 +99,10 @@ typedef struct {
 	size_t nk;
 	histo_t* k;
 	histo_t* pk_lin;
-	histo_t* sigma_v2;
+	histo_t* sigma_d2;
 	histo_t* B;
 } TermsB;
 
 Pk pk_lin;
 
-#endif //_REGPT_DEFINE_
+#endif //_REgammaPT_DEFINE_

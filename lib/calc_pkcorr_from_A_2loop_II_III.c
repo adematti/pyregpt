@@ -75,16 +75,16 @@ static void kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const in
 	for (ii=0;ii<3;ii++) kkpp[ii] = -okk[ii]-pp[ii];
 	histo_t kp = k * my_sqrt(1. + x*x - 2.*x*mu);
 	
-	histo_t sigmav2k,sigmav2p,sigmav2kp;
-	calc_running_sigma_v2(&k,&sigmav2k,1,uvcutoff);
-	calc_running_sigma_v2(&p,&sigmav2p,1,uvcutoff);
-	calc_running_sigma_v2(&kp,&sigmav2kp,1,uvcutoff);
+	histo_t sigmad2k,sigmad2p,sigmad2kp;
+	calc_running_sigma_d2(&k,&sigmad2k,1,uvcutoff);
+	calc_running_sigma_d2(&p,&sigmad2p,1,uvcutoff);
+	calc_running_sigma_d2(&kp,&sigmad2kp,1,uvcutoff);
 	/*
-	sigmav2k = 1.;
-	sigmav2p = 1.;
-	sigmav2kp = 1.;
+	sigmad2k = 1.;
+	sigmad2p = 1.;
+	sigmad2kp = 1.;
 	*/
-	histo_t exp_factor = (k*k*sigmav2k + p*p*sigmav2p + kp*kp*sigmav2kp) / 2.;
+	histo_t exp_factor = (k*k*sigmad2k + p*p*sigmad2p + kp*kp*sigmad2kp) / 2.;
 	if (exp_factor>=1e2) {
 		for (ii=0;ii<NCOMP;ii++) ff[ii] = 0.;
 		return;
@@ -138,7 +138,7 @@ static void kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const in
 #define NNEW 2000000
 #define FLATNESS 5.
 
-void calc_pkcorr_from_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
+void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
 {
 	k = k_;
 	
@@ -193,16 +193,16 @@ static int kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const int
 	for (ii=0;ii<3;ii++) kkpp[ii] = -okk[ii]-pp[ii];
 	histo_t kp = k * my_sqrt(1. + x*x - 2.*x*mu);
 	
-	histo_t sigmav2k,sigmav2p,sigmav2kp;
-	calc_running_sigma_v2(&k,&sigmav2k,1,uvcutoff);
-	calc_running_sigma_v2(&p,&sigmav2p,1,uvcutoff);
-	calc_running_sigma_v2(&kp,&sigmav2kp,1,uvcutoff);
+	histo_t sigmad2k,sigmad2p,sigmad2kp;
+	calc_running_sigma_d2(&k,&sigmad2k,1,uvcutoff);
+	calc_running_sigma_d2(&p,&sigmad2p,1,uvcutoff);
+	calc_running_sigma_d2(&kp,&sigmad2kp,1,uvcutoff);
 	/*
-	sigmav2k = 1.;
-	sigmav2p = 1.;
-	sigmav2kp = 1.;
+	sigmad2k = 1.;
+	sigmad2p = 1.;
+	sigmad2kp = 1.;
 	*/
-	histo_t exp_factor = (k*k*sigmav2k + p*p*sigmav2p + kp*kp*sigmav2kp) / 2.;
+	histo_t exp_factor = (k*k*sigmad2k + p*p*sigmad2p + kp*kp*sigmad2kp) / 2.;
 	if (exp_factor>=1e2) {
 		for (ii=0;ii<NCOMP;ii++) ff[ii] = 0.;
 		return 0;
@@ -264,7 +264,7 @@ static int kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const int
 #define STATEFILE NULL
 #define SPIN NULL
 
-void calc_pkcorr_from_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
+void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
 {
 	k = k_;
 	

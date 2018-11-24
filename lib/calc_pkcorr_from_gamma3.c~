@@ -86,7 +86,7 @@ static void kernel_pkcorr_gamma3_tree(const int *ndim, const double xx[],const i
 #define NSTART 4000
 #define NINCREASE 700
 
-void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tree)
+void calc_pkcorr_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_gamma3_tree)
 {
 	a = a_;
 	b = b_;
@@ -97,7 +97,7 @@ void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_
 
 	Vegas(NDIM, NCOMP, kernel_pkcorr_gamma3_tree, EPSREL, EPSABS, VERBOSE, MINEVAL, MAXEVAL, NSTART, NINCREASE, &neval, &fail, integral, error, prob);
 	
-	*pkcorr_G3_tree = 6.*((histo_t) integral[0])/power(2.*M_PI,6);
+	*pkcorr_gamma3_tree = 6.*((histo_t) integral[0])/power(2.*M_PI,6);
 
 }
 
@@ -164,12 +164,12 @@ static int kernel_pkcorr_gamma3_tree(const int *ndim, const double xx[],const in
 #define NSTART 4000
 #define NINCREASE 700
 #define NBATCH 1000
-#define GRIDNO 0
+#define gammaRIDNO 0
 #define STATEFILE NULL
 #define SM_PIN NULL
 
 
-void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tree)
+void calc_pkcorr_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_gamma3_tree)
 {
 	a = a_;
 	b = b_;
@@ -178,9 +178,9 @@ void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_
 	int neval, fail;
 	double integral[NCOMP]={0.}, error[NCOMP]={0.}, prob[NCOMP]={0.};
 
-	Vegas(NDIM, NCOMP, kernel_pkcorr_gamma3_tree, USERDATA, NVEC, EPSREL, EPSABS, VERBOSE, SEED, MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH, GRIDNO, STATEFILE, SM_PIN, &neval, &fail, integral, error, prob);
+	Vegas(NDIM, NCOMP, kernel_pkcorr_gamma3_tree, USERDATA, NVEC, EPSREL, EPSABS, VERBOSE, SEED, MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH, gammaRIDNO, STATEFILE, SM_PIN, &neval, &fail, integral, error, prob);
 	
-	*pkcorr_G3_tree = 6.*((histo_t) integral[0])/power(2.*M_PI,6);
+	*pkcorr_gamma3_tree = 6.*((histo_t) integral[0])/power(2.*M_PI,6);
 
 }
 */
@@ -202,7 +202,7 @@ void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_
 #define STATEFILE NULL
 #define SPIN NULL
 
-void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_G3_tree)
+void calc_pkcorr_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_gamma3_tree)
 {
 	a = a_;
 	b = b_;
@@ -213,7 +213,7 @@ void calc_pkcorr_from_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_
 
 	Suave(NDIM, NCOMP, kernel_pkcorr_gamma3_tree, USERDATA, NVEC, EPSREL, EPSABS, VERBOSE | LAST, SEED, MINEVAL, MAXEVAL, NNEW, NMIN, FLATNESS, STATEFILE, SPIN, &nregions, &neval, &fail, integral, error, prob);
 	
-	*pkcorr_G3_tree = 6.*((histo_t) integral[0])/power(2.*M_PI,6);
+	*pkcorr_gamma3_tree = 6.*((histo_t) integral[0])/power(2.*M_PI,6);
 
 }
 

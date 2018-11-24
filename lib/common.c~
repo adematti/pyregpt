@@ -204,26 +204,26 @@ void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 	find_pk(pk_lin,k,pk,nk,interpol);
 }
 
-void calc_running_sigma_v2(histo_t *k,histo_t *sigmav2,size_t nk,histo_t uvcutoff)
+void calc_running_sigma_d2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff)
 {
 	//sigmav^2 = int_0^{k/2} dq P0(q)/(6*pi^2)
 	size_t ik,iklin = 0;
-	histo_t sigmav2_ = 0.;
+	histo_t sigmad2_ = 0.;
 	for (ik=0;ik<nk;ik++) {
 		histo_t kmax = k[ik]*uvcutoff;
 		if (kmax < pk_lin.k[0]) {
-			sigmav2[ik] = 0.;
+			sigmad2[ik] = 0.;
 			continue;
 		}
 		for (iklin=iklin;iklin<pk_lin.nk-1;iklin++) {
 			if (kmax < pk_lin.k[iklin+1]) {
 				histo_t pk_kmax = interpol_lin(kmax,pk_lin.k[iklin],pk_lin.k[iklin+1],pk_lin.pk[iklin],pk_lin.pk[iklin+1]);
-				sigmav2[ik] = (sigmav2_ + (pk_kmax + pk_lin.pk[iklin]) * (kmax - pk_lin.k[iklin]))/(12.*M_PI*M_PI);
+				sigmad2[ik] = (sigmad2_ + (pk_kmax + pk_lin.pk[iklin]) * (kmax - pk_lin.k[iklin]))/(12.*M_PI*M_PI);
 				break;
 			}
-			else sigmav2_ += (pk_lin.pk[iklin+1] + pk_lin.pk[iklin]) * (pk_lin.k[iklin+1] - pk_lin.k[iklin]);
+			else sigmad2_ += (pk_lin.pk[iklin+1] + pk_lin.pk[iklin]) * (pk_lin.k[iklin+1] - pk_lin.k[iklin]);
 		}
-		if (iklin==pk_lin.nk-1) sigmav2[ik] = sigmav2_/(12.*M_PI*M_PI);
+		if (iklin==pk_lin.nk-1) sigmad2[ik] = sigmad2_/(12.*M_PI*M_PI);
 	}
 }
 
@@ -300,7 +300,7 @@ void nodes_weights_gauss_legendre(histo_t xmin,histo_t xmax,histo_t *x,histo_t *
 	}
 }
 
-void init_gauss_legendre_q(GaussLegendreQ *gauss_legendre,Precision *precision)
+void init_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,Precision *precision)
 {
 	histo_t qmin=precision->min,qmax=precision->max;
 	if ((qmin<=0.)||(qmax<=0.)) {
@@ -326,7 +326,7 @@ void init_gauss_legendre_q(GaussLegendreQ *gauss_legendre,Precision *precision)
 	find_pk_lin(gauss_legendre->q,gauss_legendre->pk,nq,precision->interpol);
 }
 
-void update_gauss_legendre_q(GaussLegendreQ *gauss_legendre,histo_t k)
+void update_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,histo_t k)
 {
 	gauss_legendre->k = k;
 	size_t iq;
@@ -334,7 +334,7 @@ void update_gauss_legendre_q(GaussLegendreQ *gauss_legendre,histo_t k)
 }
 
 
-void free_gauss_legendre_q(GaussLegendreQ *gauss_legendre)
+void free_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre)
 {
 	free(gauss_legendre->x);
 	free(gauss_legendre->q);
@@ -343,7 +343,7 @@ void free_gauss_legendre_q(GaussLegendreQ *gauss_legendre)
 }
 
 
-void init_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,Precision *precision)
+void init_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,Precision *precision)
 {
 	histo_t mumin=-1.,mumax=1.;
 	size_t size = sizeof(histo_t);
@@ -363,7 +363,7 @@ void init_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,Precision *precision
 	}
 }
 
-void update_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax)
+void update_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax)
 {
 	//gauss_legendre->mumin = mumin;
 	//gauss_legendre->mumin = mumin;
@@ -375,7 +375,7 @@ void update_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,histo_t mumin,hist
 	}
 }
 
-void free_gauss_legendre_mu(GaussLegendreMu *gauss_legendre)
+void free_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre)
 {
 	free(gauss_legendre->muref);
 	free(gauss_legendre->wref);
@@ -443,11 +443,11 @@ void error_open_file(char *fname)
 {
 	//////
 	// Open error handler
-	fprintf(stderr,"REGPT: Could not open file %s \n",fname);
+	fprintf(stderr,"REgammaPT: Could not open file %s \n",fname);
 	exit(1);
 }
 
-void write_gauss_legendre_q(GaussLegendreQ gauss_legendre,char *fn)
+void write_gauss_legendre_q(gammaaussLegendreQ gauss_legendre,char *fn)
 {
 	//////
 	// Writes gauss legendre terms into file fn, only used for debugging
@@ -459,7 +459,7 @@ void write_gauss_legendre_q(GaussLegendreQ gauss_legendre,char *fn)
 	fclose(fr);
 }
 
-void write_gauss_legendre_mu(GaussLegendreMu gauss_legendre,char *fn)
+void write_gauss_legendre_mu(gammaaussLegendreMu gauss_legendre,char *fn)
 {
 	//////
 	// Writes gauss legendre terms into file fn, only used for debugging

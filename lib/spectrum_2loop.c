@@ -31,25 +31,25 @@ void write_terms_spectrum_2loop(char *fn)
 	fr=fopen(fn,"w");
 	if(fr==NULL) error_open_file(fn);
 	for(ik=0;ik<terms_2loop.nk;ik++) {
-		fprintf(fr,"%f %f %f %f %f %f %f %f %f\n",terms_2loop.k[ik],terms_2loop.G1a_1loop[ik],terms_2loop.G1a_2loop[ik],terms_2loop.G1b_1loop[ik],terms_2loop.G1b_2loop[ik],terms_2loop.pkcorr_G2_tree_tree[ik],terms_2loop.pkcorr_G2_tree_1loop[ik],terms_2loop.pkcorr_G2_1loop_1loop[ik],terms_2loop.pkcorr_G3_tree[ik]);
+		fprintf(fr,"%f %f %f %f %f %f %f %f %f\n",terms_2loop.k[ik],terms_2loop.gamma1a_1loop[ik],terms_2loop.gamma1a_2loop[ik],terms_2loop.gamma1b_1loop[ik],terms_2loop.gamma1b_2loop[ik],terms_2loop.pkcorr_gamma2_tree_tree[ik],terms_2loop.pkcorr_gamma2_tree_1loop[ik],terms_2loop.pkcorr_gamma2_1loop_1loop[ik],terms_2loop.pkcorr_gamma3_tree[ik]);
 	}
 	fclose(fr);
 }
 
-void set_terms_spectrum_2loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* G1a_1loop,histo_t* G1a_2loop,histo_t* G1b_1loop,histo_t* G1b_2loop,histo_t* pkcorr_G2_tree_tree,histo_t *pkcorr_G2_tree_1loop,histo_t *pkcorr_G2_1loop_1loop,histo_t* pkcorr_G3_tree)
+void set_terms_spectrum_2loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_d2,histo_t* gamma1a_1loop,histo_t* gamma1a_2loop,histo_t* gamma1b_1loop,histo_t* gamma1b_2loop,histo_t* pkcorr_gamma2_tree_tree,histo_t *pkcorr_gamma2_tree_1loop,histo_t *pkcorr_gamma2_1loop_1loop,histo_t* pkcorr_gamma3_tree)
 {
 	terms_2loop.nk = nk;
 	terms_2loop.k = k;
 	terms_2loop.pk_lin = pk_lin;
-	terms_2loop.sigma_v2 = sigma_v2;
-	terms_2loop.G1a_1loop = G1a_1loop;
-	terms_2loop.G1a_2loop = G1a_2loop;
-	terms_2loop.G1b_1loop = G1b_1loop;
-	terms_2loop.G1b_2loop = G1b_2loop;
-	terms_2loop.pkcorr_G2_tree_tree = pkcorr_G2_tree_tree;
-	terms_2loop.pkcorr_G2_tree_1loop = pkcorr_G2_tree_1loop;
-	terms_2loop.pkcorr_G2_1loop_1loop = pkcorr_G2_1loop_1loop;
-	terms_2loop.pkcorr_G3_tree = pkcorr_G3_tree;
+	terms_2loop.sigma_d2 = sigma_d2;
+	terms_2loop.gamma1a_1loop = gamma1a_1loop;
+	terms_2loop.gamma1a_2loop = gamma1a_2loop;
+	terms_2loop.gamma1b_1loop = gamma1b_1loop;
+	terms_2loop.gamma1b_2loop = gamma1b_2loop;
+	terms_2loop.pkcorr_gamma2_tree_tree = pkcorr_gamma2_tree_tree;
+	terms_2loop.pkcorr_gamma2_tree_1loop = pkcorr_gamma2_tree_1loop;
+	terms_2loop.pkcorr_gamma2_1loop_1loop = pkcorr_gamma2_1loop_1loop;
+	terms_2loop.pkcorr_gamma3_tree = pkcorr_gamma3_tree;
 
 #ifdef _VERBOSE
 	print_k(terms_2loop.k,nk);
@@ -73,7 +73,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_2loop.k,terms_2loop.sigma_v2,terms_2loop.nk,uvcutoff);
+	calc_running_sigma_d2(terms_2loop.k,terms_2loop.sigma_d2,terms_2loop.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose) private(ik)
 	{
 		init_gamma1_1loop();
@@ -87,8 +87,8 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 			if (ik % step_verbose == 0) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
 			histo_t k = terms_2loop.k[ik];
-			calc_pkcorr_from_gamma1_2loop(a,b,k,&(terms_2loop.G1a_1loop[ik]),&(terms_2loop.G1a_2loop[ik]),&(terms_2loop.G1b_1loop[ik]),&(terms_2loop.G1b_2loop[ik]));
-			calc_pkcorr_from_gamma2_1loop(a,b,k,&(terms_2loop.pkcorr_G2_tree_tree[ik]),&(terms_2loop.pkcorr_G2_tree_1loop[ik]),&(terms_2loop.pkcorr_G2_1loop_1loop[ik]));
+			calc_pkcorr_gamma1_2loop(a,b,k,&(terms_2loop.gamma1a_1loop[ik]),&(terms_2loop.gamma1a_2loop[ik]),&(terms_2loop.gamma1b_1loop[ik]),&(terms_2loop.gamma1b_2loop[ik]));
+			calc_pkcorr_gamma2_1loop(a,b,k,&(terms_2loop.pkcorr_gamma2_tree_tree[ik]),&(terms_2loop.pkcorr_gamma2_tree_1loop[ik]),&(terms_2loop.pkcorr_gamma2_1loop_1loop[ik]));
 		}
 #pragma omp critical
 		{
@@ -104,16 +104,16 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 #ifdef _VERBOSE
 		if (ik % step_verbose == 0) printf(" - computation II done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
-		calc_pkcorr_from_gamma3_tree(a,b,terms_2loop.k[ik],&(terms_2loop.pkcorr_G3_tree[ik]));
+		calc_pkcorr_gamma3_tree(a,b,terms_2loop.k[ik],&(terms_2loop.pkcorr_gamma3_tree[ik]));
 	}
 	free_gamma3_tree();
 	
 #ifdef _VERBOSE
 	timer(1);
 #endif //_VERBOSE
-#ifdef _DEBUG
+#ifdef _DEBUgamma
 	write_terms_spectrum_2loop("debug_terms_spectrum_2loop.dat");
-#endif //_DEBUG
+#endif //_DEBUgamma
 }
 
 
@@ -121,16 +121,16 @@ void spectrum_2loop(histo_t *pk_2loop)
 {
 	size_t ik;
 	for (ik=0;ik<terms_2loop.nk;ik++) {
-		histo_t factor = 0.5 * terms_2loop.k[ik]*terms_2loop.k[ik] * terms_2loop.sigma_v2[ik];
+		histo_t factor = 0.5 * terms_2loop.k[ik]*terms_2loop.k[ik] * terms_2loop.sigma_d2[ik];
 		histo_t exp_factor = my_exp(-factor);
-		histo_t G1a_reg = exp_factor * (1. + factor + 0.5*factor*factor + terms_2loop.G1a_1loop[ik]*(1. + factor) + terms_2loop.G1a_2loop[ik]);
-		histo_t G1b_reg = exp_factor * (1. + factor + 0.5*factor*factor + terms_2loop.G1b_1loop[ik]*(1. + factor) + terms_2loop.G1b_2loop[ik]);
-		histo_t pkcorr_G1 = G1a_reg * G1b_reg * terms_2loop.pk_lin[ik];
+		histo_t gamma1a_reg = exp_factor * (1. + factor + 0.5*factor*factor + terms_2loop.gamma1a_1loop[ik]*(1. + factor) + terms_2loop.gamma1a_2loop[ik]);
+		histo_t gamma1b_reg = exp_factor * (1. + factor + 0.5*factor*factor + terms_2loop.gamma1b_1loop[ik]*(1. + factor) + terms_2loop.gamma1b_2loop[ik]);
+		histo_t pkcorr_gamma1 = gamma1a_reg * gamma1b_reg * terms_2loop.pk_lin[ik];
 		//Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
-		histo_t pkcorr_G2 = exp_factor*exp_factor * (terms_2loop.pkcorr_G2_tree_tree[ik] * (1. + factor)*(1. + factor) + terms_2loop.pkcorr_G2_tree_1loop[ik] * (1. + factor) + terms_2loop.pkcorr_G2_1loop_1loop[ik]);
+		histo_t pkcorr_gamma2 = exp_factor*exp_factor * (terms_2loop.pkcorr_gamma2_tree_tree[ik] * (1. + factor)*(1. + factor) + terms_2loop.pkcorr_gamma2_tree_1loop[ik] * (1. + factor) + terms_2loop.pkcorr_gamma2_1loop_1loop[ik]);
 		//Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
-		histo_t pkcorr_G3 = exp_factor*exp_factor * terms_2loop.pkcorr_G3_tree[ik];
-		pk_2loop[ik] = pkcorr_G1 + pkcorr_G2 + pkcorr_G3;
+		histo_t pkcorr_gamma3 = exp_factor*exp_factor * terms_2loop.pkcorr_gamma3_tree[ik];
+		pk_2loop[ik] = pkcorr_gamma1 + pkcorr_gamma2 + pkcorr_gamma3;
 	}
 }
 
@@ -149,7 +149,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_2loop.k,terms_2loop.sigma_v2,terms_2loop.nk,uvcutoff);
+	calc_running_sigma_d2(terms_2loop.k,terms_2loop.sigma_d2,terms_2loop.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose) private(ik)
 	{
 		init_gamma1_1loop();
@@ -165,9 +165,9 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
 			histo_t k = terms_2loop.k[ik];
-			calc_pkcorr_from_gamma1_2loop(a,b,k,&(terms_2loop.G1a_1loop[ik]),&(terms_2loop.G1a_2loop[ik]),&(terms_2loop.G1b_1loop[ik]),&(terms_2loop.G1b_2loop[ik]));
-			calc_pkcorr_from_gamma2_1loop(a,b,k,&(terms_2loop.pkcorr_G2_tree_tree[ik]),&(terms_2loop.pkcorr_G2_tree_1loop[ik]),&(terms_2loop.pkcorr_G2_1loop_1loop[ik]));
-			calc_pkcorr_from_gamma3_tree(a,b,terms_2loop.k[ik],&(terms_2loop.pkcorr_G3_tree[ik]));
+			calc_pkcorr_gamma1_2loop(a,b,k,&(terms_2loop.gamma1a_1loop[ik]),&(terms_2loop.gamma1a_2loop[ik]),&(terms_2loop.gamma1b_1loop[ik]),&(terms_2loop.gamma1b_2loop[ik]));
+			calc_pkcorr_gamma2_1loop(a,b,k,&(terms_2loop.pkcorr_gamma2_tree_tree[ik]),&(terms_2loop.pkcorr_gamma2_tree_1loop[ik]),&(terms_2loop.pkcorr_gamma2_1loop_1loop[ik]));
+			calc_pkcorr_gamma3_tree(a,b,terms_2loop.k[ik],&(terms_2loop.pkcorr_gamma3_tree[ik]));
 		}
 #pragma omp critical
 		{
@@ -182,8 +182,8 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 #ifdef _VERBOSE
 	timer(1);
 #endif //_VERBOSE
-#ifdef _DEBUG
+#ifdef _DEBUgamma
 	write_terms_spectrum_2loop("debug_2loop.dat");
-#endif //_DEBUG
+#endif //_DEBUgamma
 }
 */

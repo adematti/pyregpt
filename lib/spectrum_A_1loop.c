@@ -21,17 +21,17 @@ void set_precision_A_1loop_pk_lin(char* interpol_)
 	set_interpol(&interpol_pk_lin,interpol_);
 }
 
-void set_precision_A_1loop_sigma_v2(histo_t uvcutoff_)
+void set_precision_A_1loop_sigma_d2(histo_t uvcutoff_)
 {
 	uvcutoff = uvcutoff_;
 }
 
-void set_terms_A_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_v2,histo_t* A,histo_t* B)
+void set_terms_A_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_d2,histo_t* A,histo_t* B)
 {
 	terms_A.nk = nk;
 	terms_A.k = k;
 	terms_A.pk_lin = pk_lin;
-	terms_A.sigma_v2 = sigma_v2;
+	terms_A.sigma_d2 = sigma_d2;
 	terms_A.A = A;
 	
 #ifdef _VERBOSE
@@ -52,7 +52,7 @@ void run_terms_A_1loop(size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_A.k,terms_A.pk_lin,terms_A.nk,interpol_pk_lin);
-	calc_running_sigma_v2(terms_A.k,terms_A.sigma_v2,terms_A.nk,uvcutoff);
+	calc_running_sigma_d2(terms_A.k,terms_A.sigma_d2,terms_A.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_A,step_verbose) private(ik)
 	{
 		init_A_1loop();
@@ -62,7 +62,7 @@ void run_terms_A_1loop(size_t num_threads)
 #ifdef _VERBOSE
 			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
-			calc_pkcorr_from_A_1loop(k,&(terms_A.A[ik*NCOMP]));
+			calc_pkcorr_A_1loop(k,&(terms_A.A[ik*NCOMP]));
 		}
 #pragma omp critical
 		{
