@@ -32,20 +32,20 @@ void write_terms_spectrum_1loop(char *fn)
 	fr=fopen(fn,"w");
 	if(fr==NULL) error_open_file(fn);
 	for(ik=0;ik<terms_1loop.nk;ik++) {
-		fprintf(fr,"%f %f %f %f\n",terms_1loop.k[ik],terms_1loop.gamma1a_1loop[ik],terms_1loop.gamma1b_1loop[ik],terms_1loop.pkcorr_gamma2_tree_tree[ik]);
+		fprintf(fr,"%f %f %f %f\n",terms_1loop.k[ik],terms_1loop.gamma1a_1loop[ik],terms_1loop.gamma1b_1loop[ik],terms_1loop.pk_gamma2_tree_tree[ik]);
 	}
 	fclose(fr);
 }
 
-void set_terms_spectrum_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_d2,histo_t* gamma1a_1loop,histo_t* gamma1b_1loop,histo_t* pkcorr_gamma2_tree_tree)
+void set_terms_spectrum_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigmad2,histo_t* gamma1a_1loop,histo_t* gamma1b_1loop,histo_t* pk_gamma2_tree_tree)
 {
 	terms_1loop.nk = nk;
 	terms_1loop.k = k;
 	terms_1loop.pk_lin = pk_lin;
-	terms_1loop.sigma_d2 = sigma_d2;
+	terms_1loop.sigmad2 = sigmad2;
 	terms_1loop.gamma1a_1loop = gamma1a_1loop;
 	terms_1loop.gamma1b_1loop = gamma1b_1loop;
-	terms_1loop.pkcorr_gamma2_tree_tree = pkcorr_gamma2_tree_tree;
+	terms_1loop.pk_gamma2_tree_tree = pk_gamma2_tree_tree;
 
 #ifdef _VERBOSE
 	print_k(terms_1loop.k,nk);
@@ -56,10 +56,10 @@ void set_terms_spectrum_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigm
 void free_terms_spectrum_1loop()
 {
 	free(terms_1loop.pk_lin);
-	free(terms_1loop.sigma_d2);
+	free(terms_1loop.sigmad2);
 	free(terms_1loop.gamma1a_1loop);
 	free(terms_1loop.gamma1b_1loop);
-	free(terms_1loop.pkcorr_gamma2_tree_tree);
+	free(terms_1loop.pk_gamma2_tree_tree);
 }
 
 
@@ -78,7 +78,7 @@ void run_terms_spectrum_1loop(char* a_,char* b_,size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_1loop.k,terms_1loop.pk_lin,terms_1loop.nk,interpol_pk_lin);
-	calc_running_sigma_d2(terms_1loop.k,terms_1loop.sigma_d2,terms_1loop.nk,uvcutoff);
+	calc_running_sigmad2(terms_1loop.k,terms_1loop.sigmad2,terms_1loop.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_1loop,a,b,step_verbose) private(ik)
 	{
 		init_gamma1_1loop();
@@ -93,7 +93,7 @@ void run_terms_spectrum_1loop(char* a_,char* b_,size_t num_threads)
 			terms_1loop.gamma1a_1loop[ik] = gamma1_1loop(a,k);
 			if (b==a) terms_1loop.gamma1b_1loop[ik] = terms_1loop.gamma1a_1loop[ik];
 			else terms_1loop.gamma1b_1loop[ik] = gamma1_1loop(b,k);
-			calc_pkcorr_gamma2_tree(a,b,k,&(terms_1loop.pkcorr_gamma2_tree_tree[ik]));
+			calc_pk_gamma2_tree(a,b,k,&(terms_1loop.pk_gamma2_tree_tree[ik]));
 		}
 #pragma omp critical
 		{
@@ -113,14 +113,14 @@ void spectrum_1loop(histo_t *pk_1loop)
 {
 	size_t ik;
 	for (ik=0;ik<terms_1loop.nk;ik++) {
-		histo_t factor = 0.5 * terms_1loop.k[ik]*terms_1loop.k[ik] * terms_1loop.sigma_d2[ik];
+		histo_t factor = 0.5 * terms_1loop.k[ik]*terms_1loop.k[ik] * terms_1loop.sigmad2[ik];
 		histo_t exp_factor = my_exp(-factor);
 		histo_t gamma1a_reg = exp_factor * (1. + factor + terms_1loop.gamma1a_1loop[ik]);
 		histo_t gamma1b_reg = exp_factor * (1. + factor + terms_1loop.gamma1b_1loop[ik]);
-		histo_t pkcorr_gamma1 = gamma1a_reg * gamma1b_reg * terms_1loop.pk_lin[ik];
+		histo_t pk_gamma1 = gamma1a_reg * gamma1b_reg * terms_1loop.pk_lin[ik];
 		//Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
-		histo_t pkcorr_gamma2 = exp_factor*exp_factor * terms_1loop.pkcorr_gamma2_tree_tree[ik];
-		pk_1loop[ik] = pkcorr_gamma1 + pkcorr_gamma2;
+		histo_t pk_gamma2 = exp_factor*exp_factor * terms_1loop.pk_gamma2_tree_tree[ik];
+		pk_1loop[ik] = pk_gamma1 + pk_gamma2;
 	}
 }
 

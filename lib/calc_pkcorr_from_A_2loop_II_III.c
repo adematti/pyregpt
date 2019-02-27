@@ -76,9 +76,9 @@ static void kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const in
 	histo_t kp = k * my_sqrt(1. + x*x - 2.*x*mu);
 	
 	histo_t sigmad2k,sigmad2p,sigmad2kp;
-	calc_running_sigma_d2(&k,&sigmad2k,1,uvcutoff);
-	calc_running_sigma_d2(&p,&sigmad2p,1,uvcutoff);
-	calc_running_sigma_d2(&kp,&sigmad2kp,1,uvcutoff);
+	calc_running_sigmad2(&k,&sigmad2k,1,uvcutoff);
+	calc_running_sigmad2(&p,&sigmad2p,1,uvcutoff);
+	calc_running_sigmad2(&kp,&sigmad2kp,1,uvcutoff);
 	/*
 	sigmad2k = 1.;
 	sigmad2p = 1.;
@@ -138,7 +138,7 @@ static void kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const in
 #define NNEW 2000000
 #define FLATNESS 5.
 
-void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
+void calc_pk_A_2loop_II_III(histo_t k_,histo_t* pk_A)
 {
 	k = k_;
 	
@@ -156,7 +156,7 @@ void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
 	
 	histo_t factor = k*k*k / (2.*M_PI*M_PI);
 	size_t ii;
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] = ((histo_t) integral[ii])*factor;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] = ((histo_t) integral[ii])*factor;
 
 }
 
@@ -194,9 +194,9 @@ static int kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const int
 	histo_t kp = k * my_sqrt(1. + x*x - 2.*x*mu);
 	
 	histo_t sigmad2k,sigmad2p,sigmad2kp;
-	calc_running_sigma_d2(&k,&sigmad2k,1,uvcutoff);
-	calc_running_sigma_d2(&p,&sigmad2p,1,uvcutoff);
-	calc_running_sigma_d2(&kp,&sigmad2kp,1,uvcutoff);
+	calc_running_sigmad2(&k,&sigmad2k,1,uvcutoff);
+	calc_running_sigmad2(&p,&sigmad2p,1,uvcutoff);
+	calc_running_sigmad2(&kp,&sigmad2kp,1,uvcutoff);
 	/*
 	sigmad2k = 1.;
 	sigmad2p = 1.;
@@ -264,7 +264,7 @@ static int kernel_A_tA_2loop_II_III(const int *ndim, const double xx[],const int
 #define STATEFILE NULL
 #define SPIN NULL
 
-void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
+void calc_pk_A_2loop_II_III(histo_t k_,histo_t* pk_A)
 {
 	k = k_;
 	
@@ -275,7 +275,7 @@ void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A)
 	
 	histo_t factor = k*k*k / (2.*M_PI*M_PI);
 	size_t ii;
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] = ((histo_t) integral[ii])*factor;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] = ((histo_t) integral[ii])*factor;
 
 }
 

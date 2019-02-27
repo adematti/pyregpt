@@ -119,14 +119,14 @@ static _Bool set_mu_range(histo_t x)
 }
 
 
-void calc_pkcorr_A_1loop(histo_t k, histo_t* pkcorr_A)
+void calc_pk_A_1loop(histo_t k, histo_t* pk_A)
 {
 	update_gauss_legendre_q(&gauss_legendre_q,k);
 	histo_t pk_k;
 	find_pk_lin(&k,&pk_k,1,precision_q.interpol);
 	
 	size_t ii,iq,nq=gauss_legendre_q.nq;
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] = 0.;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] = 0.;
 		
 	for (iq=0;iq<nq;iq++) {
 
@@ -145,25 +145,25 @@ void calc_pkcorr_A_1loop(histo_t k, histo_t* pkcorr_A)
 		histo_t integ_a[NCOMP];
 		kernel_a_1loop(iq, pk_k, integ_a);
 		histo_t xw = x*gauss_legendre_q.w[iq]; //xw because integration in dlog(x)
-		for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += (integ_A_tA[ii]+integ_a[ii])*xw; 
-		//for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += integ_A_tA[ii]*xw; 
+		for (ii=0;ii<NCOMP;ii++) pk_A[ii] += (integ_A_tA[ii]+integ_a[ii])*xw; 
+		//for (ii=0;ii<NCOMP;ii++) pk_A[ii] += integ_A_tA[ii]*xw; 
 	}
 	
 	histo_t factor = k*k*k / (4.*M_PI*M_PI);
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] *= factor;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] *= factor;
 
 }
 
 
 /*
-void calc_pkcorr_A_1loop(histo_t k, histo_t* pkcorr_A)
+void calc_pk_A_1loop(histo_t k, histo_t* pk_A)
 {
 	update_gauss_legendre_q(&gauss_legendre_q,k);
 	histo_t pk_k;
 	find_pk_lin(&k,&pk_k,1,precision_q.interpol);
 	
 	size_t ii,iq,nq=gauss_legendre_q.nq;
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] = 0.;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] = 0.;
 		
 	for (iq=0;iq<nq;iq++) {
 
@@ -182,11 +182,11 @@ void calc_pkcorr_A_1loop(histo_t k, histo_t* pkcorr_A)
 			for (ii=0;ii<NCOMP;ii++) integ_A_tA[ii] += (kernel_A_tA[ii]+kernel_a[ii]/2.)*w;
 		}
 		histo_t xw = x*gauss_legendre_q.w[iq];
-		for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += integ_A_tA[ii]*xw; 
+		for (ii=0;ii<NCOMP;ii++) pk_A[ii] += integ_A_tA[ii]*xw; 
 	}
 	
 	histo_t factor = k*k*k / (4.*M_PI*M_PI);
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] *= factor;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] *= factor;
 }
 */
 

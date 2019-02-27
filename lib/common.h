@@ -53,7 +53,7 @@ void find_pk(Pk pkin,histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
 
 void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol);
 
-void calc_running_sigma_d2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff);
+void calc_running_sigmad2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff);
 
 // gauss-legendre integration
 
@@ -95,7 +95,7 @@ void free_gamma1_2loop();
 
 histo_t gamma1_2loop(FLAG a,histo_t k);
 
-void calc_pkcorr_gamma1_2loop(FLAG a,FLAG b,histo_t k,histo_t *gamma1a_1loop,histo_t *gamma1a_2loop,histo_t *gamma1b_1loop,histo_t *gamma1b_2loop);
+void calc_pk_gamma1_2loop(FLAG a,FLAG b,histo_t k,histo_t *gamma1a_1loop,histo_t *gamma1a_2loop,histo_t *gamma1b_1loop,histo_t *gamma1b_2loop);
 
 // gamma2
 
@@ -109,7 +109,7 @@ void free_gamma2_tree();
 
 histo_t gamma2_tree(FLAG a, histo_t k1, histo_t k2, histo_t k3);
 
-void calc_pkcorr_gamma2_tree(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma2_tree_tree);
+void calc_pk_gamma2_tree(FLAG a,FLAG b,histo_t k,histo_t *pk_gamma2_tree_tree);
 
 void set_precision_gamma2d_1loop(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
@@ -127,7 +127,7 @@ void free_gamma2t_1loop();
 
 histo_t gamma2t_1loop(histo_t k1, histo_t k2, histo_t k3);
 
-void calc_pkcorr_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pkcorr_gamma2_tree_tree,histo_t *pkcorr_gamma2_tree_1loop,histo_t *pkcorr_gamma2_1loop_1loop);
+void calc_pk_gamma2_1loop(FLAG a,FLAG b,histo_t k,histo_t *pk_gamma2_tree_tree,histo_t *pk_gamma2_tree_1loop,histo_t *pk_gamma2_1loop_1loop);
 
 // gamma3
 
@@ -137,7 +137,7 @@ void init_gamma3_tree();
 
 void free_gamma3_tree();
 
-void calc_pkcorr_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pkcorr_gamma3_tree);
+void calc_pk_gamma3_tree(FLAG a_, FLAG b_, histo_t k_, histo_t *pk_gamma3_tree);
 
 // bias
 
@@ -151,7 +151,7 @@ void free_bias_1loop();
 
 typedef histo_t (kernel_bias_1loop)(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq); 
 
-histo_t calc_pkcorr_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half);
+histo_t calc_pk_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half);
 
 // A 1 loop
 
@@ -163,7 +163,7 @@ void init_A_1loop();
 
 void free_A_1loop();
 
-void calc_pkcorr_A_1loop(histo_t k,histo_t* pkcorr_A);
+void calc_pk_A_1loop(histo_t k,histo_t* pk_A);
 
 // A 2 loop
 
@@ -177,7 +177,7 @@ void init_A_2loop_I();
 
 void free_A_2loop_I();
 
-void calc_pkcorr_A_2loop_I(histo_t k,histo_t* pkcorr_A);
+void calc_pk_A_2loop_I(histo_t k,histo_t* pk_A);
 
 void set_precision_A_2loop_II_III(histo_t min_,histo_t max_,char* interpol_);
 
@@ -185,7 +185,7 @@ void init_A_2loop_II_III();
 
 void free_A_2loop_II_III();
 
-void calc_pkcorr_A_2loop_II_III(histo_t k_,histo_t* pkcorr_A);
+void calc_pk_A_2loop_II_III(histo_t k_,histo_t* pk_A);
 
 // B
 
@@ -197,7 +197,7 @@ void init_B(Pk pk_dt_,Pk pk_tt_);
 
 void free_B();
 
-void calc_pkcorr_B(histo_t k,histo_t* pkcorr_B);
+void calc_pk_B(histo_t k,histo_t* pk_B);
 
 // spectrum 1 loop
 
@@ -230,9 +230,9 @@ void set_precision_A_B_q(size_t n_,histo_t min_,histo_t max_,char* interpol_);
 
 void set_precision_A_B_mu(size_t n_,char* interpol_);
 
-void calc_pkcorr_A(histo_t k, histo_t pk_k, histo_t* A);
+void calc_pk_A(histo_t k, histo_t pk_k, histo_t* A);
 
-void calc_pkcorr_B(histo_t k, histo_t* B);
+void calc_pk_B(histo_t k, histo_t* B);
 */
 
 // IOs

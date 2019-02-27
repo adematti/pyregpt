@@ -17,7 +17,7 @@ void free_gamma1()
 	free_gamma1_2loop();
 }
 
-void calc_pkcorr_gamma1_2loop(FLAG a,FLAG b,histo_t k,histo_t *gamma1a_1loop,histo_t *gamma1a_2loop,histo_t *gamma1b_1loop,histo_t *gamma1b_2loop)
+void calc_pk_gamma1_2loop(FLAG a,FLAG b,histo_t k,histo_t *gamma1a_1loop,histo_t *gamma1a_2loop,histo_t *gamma1b_1loop,histo_t *gamma1b_2loop)
 {
 	if (a==b) {
 		*gamma1a_1loop = gamma1_1loop(a,k);

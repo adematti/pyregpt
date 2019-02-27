@@ -13,7 +13,7 @@ static Precision precision_q = {.n=2000,.min=-1.,.max=-1.,.interpol=POLY};
 static const Precision precision_mu_default = {.n=200,.min=-1.,.max=1.,.interpol=POLY};
 static Precision precision_mu = {.n=200,.min=-1.,.max=1.,.interpol=POLY};
 
-histo_t kernel_pkcorr_bias_1loop(FLAG a,size_t iq, histo_t mu, kernel_bias_1loop kernel)
+histo_t kernel_pk_bias_1loop(FLAG a,size_t iq, histo_t mu, kernel_bias_1loop kernel)
 {
 	histo_t x = gauss_legendre_q.x[iq];
 	histo_t k = gauss_legendre_q.k;
@@ -67,7 +67,7 @@ static _Bool set_mu_range(histo_t x, _Bool run_half)
 	return 1;
 }
 
-histo_t calc_pkcorr_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half)
+histo_t calc_pk_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool run_half)
 {
 
 	update_gauss_legendre_q(&gauss_legendre_q,k);
@@ -82,7 +82,7 @@ histo_t calc_pkcorr_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Boo
 		histo_t integ_bias=0;
 		size_t imu,nmu=gauss_legendre_mu.nmu;
 		
-		for (imu=0;imu<nmu;imu++) integ_bias += kernel_pkcorr_bias_1loop(a,iq,gauss_legendre_mu.mu[imu],kernel) * gauss_legendre_mu.w[imu];
+		for (imu=0;imu<nmu;imu++) integ_bias += kernel_pk_bias_1loop(a,iq,gauss_legendre_mu.mu[imu],kernel) * gauss_legendre_mu.w[imu];
 		
 		histo_t x3w = x*x*x*gauss_legendre_q.w[iq];
 		if (run_half) x3w *= 2.;

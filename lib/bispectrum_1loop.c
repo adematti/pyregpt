@@ -98,9 +98,9 @@ void free_bispectrum_1loop_I()
 void bispectrum_1loop_I(histo_t k, histo_t p, histo_t kp, histo_t* b211A, histo_t* b221A, histo_t* b212A, histo_t* b222A, histo_t* b211tA, histo_t* b221tA, histo_t* b212tA, histo_t* b222tA)
 {
 	histo_t sigmad2k,sigmad2p,sigmad2kp;
-	calc_running_sigma_d2(&k,&sigmad2k,1,uvcutoff);
-	calc_running_sigma_d2(&p,&sigmad2p,1,uvcutoff);
-	calc_running_sigma_d2(&kp,&sigmad2kp,1,uvcutoff);
+	calc_running_sigmad2(&k,&sigmad2k,1,uvcutoff);
+	calc_running_sigmad2(&p,&sigmad2p,1,uvcutoff);
+	calc_running_sigmad2(&kp,&sigmad2kp,1,uvcutoff);
 	/*
 	sigmad2k = 1.;
 	sigmad2p = 1.;

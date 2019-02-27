@@ -102,12 +102,12 @@ static _Bool set_mu_range(histo_t x)
 	return 1;
 }
 
-void calc_pkcorr_A_2loop_I(histo_t k,histo_t* pkcorr_A)
+void calc_pk_A_2loop_I(histo_t k,histo_t* pk_A)
 {
 	update_gauss_legendre_q(&gauss_legendre_q,k);
 	
 	size_t ii,iq,nq=gauss_legendre_q.nq;
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] = 0.;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] = 0.;
 		
 	for (iq=0;iq<nq;iq++) {
 	
@@ -123,10 +123,10 @@ void calc_pkcorr_A_2loop_I(histo_t k,histo_t* pkcorr_A)
 			for (ii=0;ii<NCOMP;ii++) integ_A_tA[ii] += kernel_A_tA[ii]*w;
 		}
 		histo_t w = gauss_legendre_q.w[iq];
-		for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] += integ_A_tA[ii]*w; 
+		for (ii=0;ii<NCOMP;ii++) pk_A[ii] += integ_A_tA[ii]*w; 
 	}
 	
 	histo_t factor = k*k*k / (2.*M_PI*M_PI);
-	for (ii=0;ii<NCOMP;ii++) pkcorr_A[ii] *= factor;
+	for (ii=0;ii<NCOMP;ii++) pk_A[ii] *= factor;
 
 }

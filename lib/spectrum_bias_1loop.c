@@ -58,12 +58,12 @@ void set_running_uvcutoff_bias_1loop(histo_t uvcutoff_)
 }
 
 
-void set_terms_bias_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_d2,histo_t* pk_b2d,histo_t* pk_bs2d,histo_t* pk_b2t,histo_t* pk_bs2t,histo_t* pk_b22,histo_t* pk_b2s2,histo_t* pk_bs22,histo_t* sigma3sq)
+void set_terms_bias_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigmad2,histo_t* pk_b2d,histo_t* pk_bs2d,histo_t* pk_b2t,histo_t* pk_bs2t,histo_t* pk_b22,histo_t* pk_b2s2,histo_t* pk_bs22,histo_t* sigma3sq)
 {
 	terms_bias.nk = nk;
 	terms_bias.k = k;
 	terms_bias.pk_lin = pk_lin;
-	terms_bias.sigma_d2 = sigma_d2;
+	terms_bias.sigmad2 = sigmad2;
 	terms_bias.pk_b2d = pk_b2d;
 	terms_bias.pk_bs2d = pk_bs2d;
 	terms_bias.pk_b2t = pk_b2t;
@@ -91,7 +91,7 @@ void run_terms_bias_1loop(size_t num_threads)
 
 	timer(0);
 	find_pk_lin(terms_bias.k,terms_bias.pk_lin,terms_bias.nk,interpol_pk_lin);
-	calc_running_sigma_d2(terms_bias.k,terms_bias.sigma_d2,terms_bias.nk,uvcutoff);
+	calc_running_sigmad2(terms_bias.k,terms_bias.sigmad2,terms_bias.nk,uvcutoff);
 #pragma omp parallel default(none) shared(terms_bias,step_verbose) private(ik)
 	{
 		init_bias_1loop();
@@ -101,15 +101,15 @@ void run_terms_bias_1loop(size_t num_threads)
 #ifdef _VERBOSE
 			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
-			terms_bias.pk_b2d[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_b2,1);
-			//terms_bias.pk_b2d[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_b2,0);
-			terms_bias.pk_bs2d[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_bs2,1);
-			terms_bias.pk_b2t[ik] = calc_pkcorr_bias_1loop(THETA,k,kernel_b2,1);
-			terms_bias.pk_bs2t[ik] = calc_pkcorr_bias_1loop(THETA,k,kernel_bs2,1);
-			terms_bias.pk_b22[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_b22,0);
-			terms_bias.pk_b2s2[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_b2s2,0);
-			terms_bias.pk_bs22[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_bs22,0);
-			terms_bias.sigma3sq[ik] = calc_pkcorr_bias_1loop(DELTA,k,kernel_sigma3sq,0);
+			terms_bias.pk_b2d[ik] = calc_pk_bias_1loop(DELTA,k,kernel_b2,1);
+			//terms_bias.pk_b2d[ik] = calc_pk_bias_1loop(DELTA,k,kernel_b2,0);
+			terms_bias.pk_bs2d[ik] = calc_pk_bias_1loop(DELTA,k,kernel_bs2,1);
+			terms_bias.pk_b2t[ik] = calc_pk_bias_1loop(THETA,k,kernel_b2,1);
+			terms_bias.pk_bs2t[ik] = calc_pk_bias_1loop(THETA,k,kernel_bs2,1);
+			terms_bias.pk_b22[ik] = calc_pk_bias_1loop(DELTA,k,kernel_b22,0);
+			terms_bias.pk_b2s2[ik] = calc_pk_bias_1loop(DELTA,k,kernel_b2s2,0);
+			terms_bias.pk_bs22[ik] = calc_pk_bias_1loop(DELTA,k,kernel_bs22,0);
+			terms_bias.sigma3sq[ik] = calc_pk_bias_1loop(DELTA,k,kernel_sigma3sq,0);
 		}
 #pragma omp critical
 		{

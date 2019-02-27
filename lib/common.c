@@ -78,12 +78,17 @@ histo_t my_cos(histo_t x)
 #endif //_FLOAT32
 }
 
-histo_t power(histo_t x,const size_t n)
+histo_t power(histo_t base,size_t exp)
 {
-	if (n==1) return x;
-	if (n%2==0) return power(x*x,n/2);
-	return x*power(x*x,(n-1)/2);
-} 
+    histo_t result = 1.;
+    while (exp)
+    {
+        if (exp & 1) result *= base;
+        exp /= 2;
+        base *= base;
+    }
+    return result;
+}
 
 void powers(histo_t x,histo_t *tab, const size_t npowers)
 {
@@ -204,7 +209,7 @@ void find_pk_lin(histo_t* k,histo_t* pk,size_t nk,INTERPOL interpol)
 	find_pk(pk_lin,k,pk,nk,interpol);
 }
 
-void calc_running_sigma_d2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff)
+void calc_running_sigmad2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff)
 {
 	//sigmav^2 = int_0^{k/2} dq P0(q)/(6*pi^2)
 	size_t ik,iklin = 0;

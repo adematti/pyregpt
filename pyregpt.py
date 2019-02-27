@@ -39,9 +39,10 @@ def scale_factor(npk=1):
 def damping_factor(npk=1):
 	def _decorate(func):
 		@functools.wraps(func)				
-		def wrapper(self,Dgrowth=1.,sigma_d2=None,*args,**kwargs):
-			factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_d2'] if sigma_d2 is None else sigma_d2)
-			return Dgrowth**(2*npk)*scipy.exp(-npk*factor)*(1.+factor)**npk*func(self,*args,**kwargs)
+		def wrapper(self,Dgrowth=1.,sigmad2=None,*args,**kwargs):
+			factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigmad2'] if sigmad2 is None else sigmad2)
+			regfactor = scipy.exp(-npk*factor)*(1. + factor)**npk
+			return Dgrowth**(2*npk)*regfactor*func(self,*args,**kwargs)
 		return wrapper
 	return _decorate
 
@@ -82,9 +83,7 @@ class Terms(object):
 			self.columns[name] = item
 		else:
 			for key in self.fields:
-				tmp = getattr(self,key)
-				tmp[name] = item
-				setattr(self,key,tmp)
+				self.columns[key][name] = item
 	
 	def	__contains__(self,name):
 		if name in self.columns: return True
@@ -96,6 +95,9 @@ class Terms(object):
 	
 	def tolist(self):
 		return [self[key] for key in self]
+	
+	def pop(self,key):
+		return self.columns.pop(key)
 	
 	def getstate(self,fields=None):
 		if fields is None: fields = self.fields
@@ -131,7 +133,6 @@ class Terms(object):
 		for key in self.fields: self[key] *= scale**(2*self.SCALE[key])
 
 	def zeros(self,k,dtype=ctypes.c_double):
-	
 		self['k'] = scipy.asarray(k,dtype=dtype).flatten()
 		for key in self.FIELDS:
 			if key == 'k': continue
@@ -149,14 +150,14 @@ class Terms(object):
 	def pk_interp(self,k,left=0.,right=0.,**kwargs):
 		return scipy.interp(k,self.k,self.pk(**kwargs),left=left,right=right)
 		
-	def sigma_v(self,**kwargs):
+	def sigmav(self,**kwargs):
 		return scipy.sqrt(1./6./constants.pi**2*integrate.trapz(self.pk(**kwargs),x=self.k,axis=-1))
 	
-	def sigma_r(self,r,**kwargs):
+	def sigmar(self,r,**kwargs):
 		x = self.k*r
 		w = 3.*(scipy.sin(x)-x*scipy.cos(x))/x**3
-		sigma_r2 = 1./2./constants.pi**2*integrate.trapz(self.pk(**kwargs)*(w*k)**2,x=self.k,axis=-1)
-		return scipy.sqrt(sigma_r2)
+		sigmar2 = 1./2./constants.pi**2*integrate.trapz(self.pk(**kwargs)*(w*k)**2,x=self.k,axis=-1)
+		return scipy.sqrt(sigmar2)
 
 class SpectrumLin(Terms):
 
@@ -202,7 +203,7 @@ class SpectrumNoWiggle(SpectrumLin):
 class PyRegPT(Terms):
 
 	C_TYPE = ctypes.c_double
-	#pkTH_CUBA = os.path.join(os.getenv('CUBA'),'libcuba.so')
+	#PATH_CUBA = os.path.join(os.getenv('CUBA'),'libcuba.so')
 	PATH_REGPT = os.path.join(os.path.dirname(os.path.realpath(__file__)),'regpt.so')
 
 	def __init__(self,*args,**kwargs):
@@ -246,15 +247,15 @@ class PyRegPT(Terms):
 
 		return pk
 
-	def calc_running_sigma_d2(self,k,uvcutoff=0.5):
+	def calc_running_sigmad2(self,k,uvcutoff=0.5):
 
 		k = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		sigma_d2 = scipy.zeros_like(k)
+		sigmad2 = scipy.zeros_like(k)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(len(k),))
-		self.regpt.calc_running_sigma_d2.argtypes = (pointer,pointer,ctypes.c_size_t,self.C_TYPE)
-		self.regpt.calc_running_sigma_d2(k,sigma_d2,len(k),uvcutoff)
+		self.regpt.calc_running_sigmad2.argtypes = (pointer,pointer,ctypes.c_size_t,self.C_TYPE)
+		self.regpt.calc_running_sigmad2(k,sigmad2,len(k),uvcutoff)
 
-		return sigma_d2
+		return sigmad2
 		
 	def set_spectrum_lin(self,spectrum_lin):
 	
@@ -338,7 +339,7 @@ class PyRegPT(Terms):
 	def pad_k(self,k,mode='constant',constant_values=0.,interpol='poly'):
 		super(PyRegPT,self).pad_k(k,mode=mode,constant_values=constant_values)
 		if 'pk_lin' in self.FIELDS: self['pk_lin'] = self.find_pk_lin(self.k,interpol=interpol)
-		if 'sigma_d2' in self.FIELDS: self['sigma_d2'] = self.calc_running_sigma_d2(self.k)
+		if 'sigmad2' in self.FIELDS: self['sigmad2'] = self.calc_running_sigmad2(self.k)
 
 	def clear(self):
 		#To reset all precision settings
@@ -347,8 +348,8 @@ class PyRegPT(Terms):
 
 class Spectrum1Loop(PyRegPT):
 
-	FIELDS = ['k','pk_lin','sigma_d2','gamma1a_1loop','gamma1b_1loop','pkcorr_gamma2_tree_tree']
-	SCALE = {'k':0,'pk_lin':1,'sigma_d2':1,'gamma1a_1loop':1,'gamma1b_1loop':1,'pkcorr_gamma2_tree_tree':2}
+	FIELDS = ['k','pk_lin','sigmad2','gamma1a_1loop','gamma1b_1loop','pk_gamma2_tree_tree']
+	SCALE = {'k':0,'pk_lin':1,'sigmad2':1,'gamma1a_1loop':1,'gamma1b_1loop':1,'pk_gamma2_tree_tree':2}
 
 	def set_terms(self,k):
 		
@@ -366,22 +367,22 @@ class Spectrum1Loop(PyRegPT):
 	def pk_lin(self):
 		return self['pk_lin']
 
-	def pk(self,Dgrowth=1.,sigma_d2=None):
+	def pk(self,Dgrowth=1.,sigmad2=None):
 		#Dgrowth is Dgrowth or sigma8...
 		#Taruya 2012 (arXiv 1208.1191v1) eq 24
-		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_d2'] if sigma_d2 is None else sigma_d2)
+		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigmad2'] if sigmad2 is None else sigmad2)
 		gamma1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + Dgrowth**2*self['gamma1a_1loop'])
 		gamma1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + Dgrowth**2*self['gamma1b_1loop'])
 		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
-		pkcorr_gamma1 = gamma1a_reg * gamma1b_reg * self['pk_lin']
+		pk_gamma1 = gamma1a_reg * gamma1b_reg * self['pk_lin']
 		#Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
-		pkcorr_gamma2 = Dgrowth**4 * scipy.exp(-2. * factor) * self['pkcorr_gamma2_tree_tree']
-		return pkcorr_gamma1 + pkcorr_gamma2
+		pk_gamma2 = Dgrowth**4 * scipy.exp(-2. * factor) * self['pk_gamma2_tree_tree']
+		return pk_gamma1 + pk_gamma2
 		
 class Spectrum2Loop(Spectrum1Loop):
 
-	FIELDS = ['k','pk_lin','sigma_d2','gamma1a_1loop','gamma1a_2loop','gamma1b_1loop','gamma1b_2loop','pkcorr_gamma2_tree_tree','pkcorr_gamma2_tree_1loop','pkcorr_gamma2_1loop_1loop','pkcorr_gamma3_tree']
-	SCALE = {'k':0,'pk_lin':1,'sigma_d2':1,'gamma1a_1loop':1,'gamma1a_2loop':2,'gamma1b_1loop':1,'gamma1b_2loop':2,'pkcorr_gamma2_tree_tree':2,'pkcorr_gamma2_tree_1loop':3,'pkcorr_gamma2_1loop_1loop':4,'pkcorr_gamma3_tree':3}
+	FIELDS = ['k','pk_lin','sigmad2','gamma1a_1loop','gamma1a_2loop','gamma1b_1loop','gamma1b_2loop','pk_gamma2_tree_tree','pk_gamma2_tree_1loop','pk_gamma2_1loop_1loop','pk_gamma3_tree']
+	SCALE = {'k':0,'pk_lin':1,'sigmad2':1,'gamma1a_1loop':1,'gamma1a_2loop':2,'gamma1b_1loop':1,'gamma1b_2loop':2,'pk_gamma2_tree_tree':2,'pk_gamma2_tree_1loop':3,'pk_gamma2_1loop_1loop':4,'pk_gamma3_tree':3}
 	
 	def set_terms(self,k):
 		
@@ -395,25 +396,25 @@ class Spectrum2Loop(Spectrum1Loop):
 		self.regpt.run_terms_spectrum_2loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
 		self.regpt.run_terms_spectrum_2loop(a,b,nthreads)
 	
-	def pk(self,Dgrowth=1.,sigma_d2=None):
+	def pk(self,Dgrowth=1.,sigmad2=None):
 		#Dgrowth is Dgrowth or sigma8...
 		#Taruya 2012 (arXiv 1208.1191v1) eq 24
-		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigma_d2'] if sigma_d2 is None else sigma_d2)
+		factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigmad2'] if sigmad2 is None else sigmad2)
 		gamma1a_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['gamma1a_1loop']*(1. + factor) + Dgrowth**4*self['gamma1a_2loop'])
 		gamma1b_reg = Dgrowth * scipy.exp(-factor) * (1. + factor + 0.5*factor**2 + Dgrowth**2*self['gamma1b_1loop']*(1. + factor) + Dgrowth**4*self['gamma1b_2loop'])
 		#Taruya 2012 (arXiv 1208.1191v1) first term of eq 23
-		pkcorr_gamma1 = gamma1a_reg * gamma1b_reg * self['pk_lin']
+		pk_gamma1 = gamma1a_reg * gamma1b_reg * self['pk_lin']
 		#Taruya 2012 (arXiv 1208.1191v1) second term of eq 23
-		pkcorr_gamma2 = Dgrowth**4 * scipy.exp(-2. * factor) * (self['pkcorr_gamma2_tree_tree'] * (1. + factor)**2 + self['pkcorr_gamma2_tree_1loop'] * Dgrowth**2 * (1. + factor) + self['pkcorr_gamma2_1loop_1loop'] * Dgrowth**4)
+		pk_gamma2 = Dgrowth**4 * scipy.exp(-2. * factor) * (self['pk_gamma2_tree_tree'] * (1. + factor)**2 + self['pk_gamma2_tree_1loop'] * Dgrowth**2 * (1. + factor) + self['pk_gamma2_1loop_1loop'] * Dgrowth**4)
 		#Taruya 2012 (arXiv 1208.1191v1) third term of eq 23
-		pkcorr_gamma3 = Dgrowth**6 * scipy.exp(-2. * factor) * self['pkcorr_gamma3_tree']
-		return pkcorr_gamma1 + pkcorr_gamma2 + pkcorr_gamma3
-		#return pkcorr_gamma1 + pkcorr_gamma2 + pkcorr_gamma3
+		pk_gamma3 = Dgrowth**6 * scipy.exp(-2. * factor) * self['pk_gamma3_tree']
+		return pk_gamma1 + pk_gamma2 + pk_gamma3
+		#return pk_gamma1 + pk_gamma2 + pk_gamma3
 		
 class Bias1Loop(PyRegPT):
 
-	FIELDS = ['k','pk_lin','sigma_d2','pk_b2d','pk_bs2d','pk_b2t','pk_bs2t','pk_b22','pk_b2s2','pk_bs22','sigma3sq']
-	SCALE = {'k':0,'pk_lin':1,'sigma_d2':1,'pk_b2d':2,'pk_bs2d':2,'pk_b2t':2,'pk_bs2t':2,'pk_b22':2,'pk_b2s2':2,'pk_bs22':2,'sigma3sq':2}
+	FIELDS = ['k','pk_lin','sigmad2','pk_b2d','pk_bs2d','pk_b2t','pk_bs2t','pk_b22','pk_b2s2','pk_bs22','sigma3sq']
+	SCALE = {'k':0,'pk_lin':1,'sigmad2':1,'pk_b2d':2,'pk_bs2d':2,'pk_b2t':2,'pk_bs2t':2,'pk_b22':2,'pk_b2s2':2,'pk_bs22':2,'sigma3sq':2}
 	
 	@scale_factor(1)
 	def pk_lin(self):
@@ -462,14 +463,6 @@ class Bias1Loop(PyRegPT):
 	@damping_factor(2)
 	def pk_bs22_damp(self):
 		return self['pk_bs22']
-	
-	def shotnoise(self,kmin=5e-4,kmax=10.):
-		ones = scipy.ones_like(self.k)
-		mask = self.k>kmax
-		ones[mask] *= scipy.exp(-(self.k[mask]/kmax-1)**2)
-		mask = self.k<kmin
-		ones[mask] *= scipy.exp(-(kmin/self.k[mask]-1)**2)
-		return ones
 		
 	def set_terms(self,k):
 		
@@ -485,8 +478,8 @@ class Bias1Loop(PyRegPT):
 
 class A1Loop(PyRegPT):
 	
-	FIELDS = ['k','pk_lin','sigma_d2','pk']
-	SCALE = {'k':0,'pk_lin':1,'sigma_d2':1,'pk':2}
+	FIELDS = ['k','pk_lin','sigmad2','pk']
+	SCALE = {'k':0,'pk_lin':1,'sigmad2':1,'pk':2}
 	SHAPE = {'pk':(5,)}
 	
 	@scale_factor(1)
@@ -540,8 +533,8 @@ class A2Loop(A1Loop):
 
 class B1Loop(PyRegPT):
 
-	FIELDS = ['k','pk_lin','sigma_d2','pk']
-	SCALE = {'k':0,'pk_lin':1,'sigma_d2':1,'pk':2}
+	FIELDS = ['k','pk_lin','sigmad2','pk']
+	SCALE = {'k':0,'pk_lin':1,'sigmad2':1,'pk':2}
 	SHAPE = {'pk':(9,)}
 	
 	@scale_factor(1)
@@ -603,7 +596,7 @@ class B2Loop(B1Loop):
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
 		self.regpt.set_spectra_B.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t,pointer,pointer)
 		
-		pk_dt = self.spectrum_1loop_dt.pk() #why do I need to do that?
+		pk_dt = self.spectrum_1loop_dt.pk() #why do I have to do that?
 		pk_tt = self.spectrum_1loop_tt.pk()
 		
 		self.regpt.set_spectra_B('delta','theta',self.spectrum_lin.size,self.spectrum_lin.k,pk_dt)
@@ -611,10 +604,3 @@ class B2Loop(B1Loop):
 			
 		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_B(nthreads)
-	
-	"""
-	def run_terms(self,nthreads=8):
-
-		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
-		self.regpt.run_terms_B(nthreads)
-	"""

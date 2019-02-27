@@ -40,12 +40,12 @@ void write_spectra_B(char *fn)
 	fclose(fr);
 }
 
-void set_terms_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigma_d2,histo_t* B)
+void set_terms_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigmad2,histo_t* B)
 {
 	terms_B.nk = nk;
 	terms_B.k = k;
 	terms_B.pk_lin = pk_lin;
-	terms_B.sigma_d2 = sigma_d2;
+	terms_B.sigmad2 = sigmad2;
 	terms_B.B = B;
 	
 #ifdef _VERBOSE
@@ -110,11 +110,11 @@ void run_terms_B(size_t num_threads)
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_B.nk*STEP_VERBOSE/100,1);
-	histo_t pkcorr_B[12];
+	histo_t pk_B[12];
 		
 	timer(0);
 	find_pk_lin(terms_B.k,terms_B.pk_lin,terms_B.nk,interpol_pk_lin);
-	calc_running_sigma_d2(terms_B.k,terms_B.sigma_d2,terms_B.nk,uvcutoff);
+	calc_running_sigmad2(terms_B.k,terms_B.sigmad2,terms_B.nk,uvcutoff);
 	
 	_Bool free_spectra = 0;
 	if ((pk_dt.nk==0)||(pk_tt.nk==0)) {
@@ -124,7 +124,7 @@ void run_terms_B(size_t num_threads)
 #ifdef _DEBUgamma
 	write_spectra_B("debug_spectra_B.dat");
 #endif //_DEBUgamma
-#pragma omp parallel default(none) shared(terms_B,step_verbose,pk_dt,pk_tt) private(ik,pkcorr_B)
+#pragma omp parallel default(none) shared(terms_B,step_verbose,pk_dt,pk_tt) private(ik,pk_B)
 	{
 		init_B(pk_dt,pk_tt);
 #pragma omp for nowait schedule(dynamic)
@@ -133,16 +133,16 @@ void run_terms_B(size_t num_threads)
 #ifdef _VERBOSE
 			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 #endif //_VERBOSE
-			calc_pkcorr_B(k,pkcorr_B);
-			terms_B.B[ik*NCOMP] = pkcorr_B[0];					//pk_B111, mu^2 * f^2
-			terms_B.B[ik*NCOMP+1] = - (pkcorr_B[1] + pkcorr_B[2]);	//pk_B112 + pk_B121, mu^2 * f^3 
-			terms_B.B[ik*NCOMP+2] = pkcorr_B[3];				//pk_B122, mu^2 * f^4
-			terms_B.B[ik*NCOMP+3] = pkcorr_B[4];				//pk_B211, mu^4 * f^2
-			terms_B.B[ik*NCOMP+4] = - (pkcorr_B[5] + pkcorr_B[6]);	//pk_B212 + pk_B221, mu^4 * f^3
-			terms_B.B[ik*NCOMP+5] = pkcorr_B[7];				//pk_B222, mu^4 * f^4
-			terms_B.B[ik*NCOMP+6] = - (pkcorr_B[8] + pkcorr_B[9]);	//pk_B312 + pk_B321, mu^6 * f^3
-			terms_B.B[ik*NCOMP+7] = pkcorr_B[10];				//pk_B322, mu^6 * f^4
-			terms_B.B[ik*NCOMP+8] = pkcorr_B[11];				//pk_B422, mu^8 * f^4
+			calc_pk_B(k,pk_B);
+			terms_B.B[ik*NCOMP] = pk_B[0];					//pk_B111, mu^2 * f^2
+			terms_B.B[ik*NCOMP+1] = - (pk_B[1] + pk_B[2]);	//pk_B112 + pk_B121, mu^2 * f^3 
+			terms_B.B[ik*NCOMP+2] = pk_B[3];				//pk_B122, mu^2 * f^4
+			terms_B.B[ik*NCOMP+3] = pk_B[4];				//pk_B211, mu^4 * f^2
+			terms_B.B[ik*NCOMP+4] = - (pk_B[5] + pk_B[6]);	//pk_B212 + pk_B221, mu^4 * f^3
+			terms_B.B[ik*NCOMP+5] = pk_B[7];				//pk_B222, mu^4 * f^4
+			terms_B.B[ik*NCOMP+6] = - (pk_B[8] + pk_B[9]);	//pk_B312 + pk_B321, mu^6 * f^3
+			terms_B.B[ik*NCOMP+7] = pk_B[10];				//pk_B322, mu^6 * f^4
+			terms_B.B[ik*NCOMP+8] = pk_B[11];				//pk_B422, mu^8 * f^4
 		}
 #pragma omp critical
 		{

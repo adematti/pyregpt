@@ -15,7 +15,7 @@ def save_reference_terms_spectrum_2loop():
 	pyregpt = Spectrum2Loop()
 	k,pklin = load_pklin()
 	pyregpt.set_pk_lin(k,pklin)
-	k = pyregpt.spectrum_lin.k[(pyregpt.spectrum_lin.k > 0.1)][:10]
+	k = pyregpt.spectrum_lin.k[(pyregpt.spectrum_lin.k > 0.1)][:50:5]
 	pyregpt.set_terms(k)
 	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	for a in ['delta','theta']:
@@ -29,7 +29,7 @@ def load_reference_terms_spectrum_2loop(a='delta',b='theta',self=True):
 		dtype = [(key,'f8') for key in Spectrum2Loop.FIELDS]
 		ref = scipy.loadtxt('self_terms_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)
 	else:
-		dtype = ['k','G1a_1loop','G1a_2loop','G1b_1loop','G1b_2loop','pkcorr_G2_tree_tree','pkcorr_G2_tree_1loop','pkcorr_G2_1loop_1loop','pkcorr_G3_tree','sigma_d2']
+		dtype = ['k','gamma1a_1loop','gamma1a_2loop','gamma1b_1loop','gamma1b_2loop','pk_gamma2_tree_tree','pk_gamma2_tree_1loop','pk_gamma2_1loop_1loop','pk_gamma3_tree','sigmad2']
 		dtype = [(key,'f8') for key in dtype]
 		ref = scipy.loadtxt('ref_terms_spectrum_2loop_{}_{}.dat'.format(a,b),dtype=dtype)[200:280:10] #gamma3 integration is routine has been updated since RegPT
 	return ref
@@ -38,7 +38,7 @@ def save_reference_spectrum_2loop():
 	pyregpt = Spectrum2Loop()
 	k,pklin = load_pklin()
 	pyregpt.set_pk_lin(k,pklin)
-	k = pyregpt.spectrum_lin.k[(pyregpt.spectrum_lin.k > 0.1)][:10]
+	k = pyregpt.spectrum_lin.k[(pyregpt.spectrum_lin.k > 0.1)][:50:5]
 	pyregpt.set_terms(k)
 	pyregpt.set_precision(calculation='spectrum_2loop_q',min=-2,max=-1.)
 	for a in ['delta','theta']:
@@ -187,13 +187,13 @@ def test_interpol_poly():
 		for x,y in zip(tabx,taby):
 			assert pyregpt.interpol_poly(x,tabx,taby)==y
 
-def test_sigma_d2():
+def test_sigmad2():
 	k,pklin = load_pklin()
 	pyregpt = PyRegPT()
 	pyregpt.set_pk_lin(k,pklin)
 	newk = scipy.concatenate([k,[k[-1]*2.,k[-1]*3.]],axis=-1)
-	sigma_d2 = pyregpt.calc_running_sigma_d2(newk)
-	assert sigma_d2[-2] == sigma_d2[-1]
+	sigmad2 = pyregpt.calc_running_sigmad2(newk)
+	assert sigmad2[-2] == sigmad2[-1]
 
 	
 def test_terms_1loop(a='delta',b='delta'):
@@ -373,15 +373,11 @@ def test_pad(a='delta',b='delta'):
 	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(a,b,nthreads=nthreads)
 	bak = pyregpt.deepcopy()
-	pyregpt.set_pk_lin(k,pklin)
 	pyregpt.pad_k(k,interpol='poly')
 	for key in pyregpt:
-		#print key,pyregpt.terms_2loop[key][(pyregpt.terms_2loop.k>=bak.k[0]*0.8) & (pyregpt.terms_2loop.k<=bak.k[-1]*1.1)]
-		assert len(pyregpt[key]) == len(k)
+		#assert len(pyregpt[key]) == len(k) #false, as pyregpt.k is just extended, not replaced
 		mask = (pyregpt['k']>=bak['k'][0]) & (pyregpt['k']<=bak['k'][-1])
 		testing.assert_allclose(pyregpt[key][mask],bak[key],rtol=1e-6,atol=1e-7)
-		if key=='k': testing.assert_allclose(pyregpt[key][~mask],k[~mask],rtol=1e-6,atol=1e-7)
-		if key=='pk_lin': testing.assert_allclose(pyregpt[key][~mask],pklin[~mask],rtol=1e-6,atol=1e-7)
 
 def test_copy():
 	pyregpt = PyRegPT()
@@ -426,13 +422,14 @@ save_reference_spectrum_2loop()
 save_reference_terms_spectrum_2loop()
 """
 
+"""
 test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
-test_sigma_d2()
-test_terms_1loop(a='delta',b='theta')
+test_sigmad2()
+#test_terms_1loop(a='delta',b='theta')
 test_all_1loop()
-test_terms_2loop(a='delta',b='theta')
+#test_terms_2loop(a='delta',b='theta')
 test_all_2loop()
 test_precision()
 test_A_1loop()
@@ -444,6 +441,8 @@ test_pad()
 test_copy()
 plot_pk_lin()
 plot_spectrum_nowiggle()
+"""
+test_pad()
 
 """
 def debug():
