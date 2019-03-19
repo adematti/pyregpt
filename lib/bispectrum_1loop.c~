@@ -45,7 +45,7 @@ void gamma2_reg_1loop(histo_t k,histo_t p,histo_t kp,histo_t sigmad2k,histo_t si
 	if ((MAX3(kp, k, p)>=1e-2)&&(k>=1e-2)) {
 		*gamma2d_kp_k = gamma2_tree(DELTA, kp, k, p) * (1. + p*p*sigmad2p/2.) + gamma2d_1loop(kp, k, p);
 		*gamma2t_kp_k = gamma2_tree(THETA, kp, k, p) * (1. + p*p*sigmad2p/2.) + gamma2t_1loop(kp, k, p);
-		*gamma2d_p_k = gamma2_tree(DELTA, p, k, kp) * (1. + kp*kp*sigmad2kp/2.) + gamma2d_1loop(p, k, kp);
+   		*gamma2d_p_k = gamma2_tree(DELTA, p, k, kp) * (1. + kp*kp*sigmad2kp/2.) + gamma2d_1loop(p, k, kp);
 		*gamma2t_p_k = gamma2_tree(THETA, p, k, kp) * (1. + kp*kp*sigmad2kp/2.) + gamma2t_1loop(p, k, kp);
 		*gamma2d_p_kp = gamma2_tree(DELTA, p, kp, k) * (1. + k*k*sigmad2k/2.) + gamma2d_1loop(p, kp, k);
 		*gamma2t_p_kp = gamma2_tree(THETA, p, kp, k) * (1. + k*k*sigmad2k/2.) + gamma2t_1loop(p, kp, k);

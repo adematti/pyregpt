@@ -475,16 +475,7 @@ class Bias1Loop(PyRegPT):
 		
 		self.regpt.run_terms_bias_1loop.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_bias_1loop(nthreads)
-		
-	def shotnoise(self,kmin=5e-4,kmax=10.):
-		ones = scipy.ones_like(self.k)
-		mask = self.k>kmax
-		ones[mask] *= scipy.exp(-(self.k[mask]/kmax-1)**2)
-		mask = self.k<kmin
-		ones[mask] *= scipy.exp(-(kmin/self.k[mask]-1)**2)
-		return ones
 
-		
 class A1Loop(PyRegPT):
 	
 	FIELDS = ['k','pk_lin','sigmad2','pk']
