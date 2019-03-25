@@ -15,35 +15,35 @@ static histo_t uvcutoff = 0.5;
 static TermsBias terms_bias;
 
 
-histo_t kernel_b2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t kernel_b2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t muqkq, histo_t pk_q, histo_t pk_kq)
 {
-	return pk_q * pk_kq * F2_sym_fast(a,q*q,kq*kq,mukkq*q*kq);
+	return pk_q * pk_kq * F2_sym_fast(a,q*q,kq*kq,muqkq*q*kq);
 }
 
-histo_t kernel_bs2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t kernel_bs2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t muqkq, histo_t pk_q, histo_t pk_kq)
 {
-	return pk_q * pk_kq * F2_sym_fast(a,q*q,kq*kq,mukkq*q*kq) * S2(mukkq);
+	return pk_q * pk_kq * F2_sym_fast(a,q*q,kq*kq,muqkq*q*kq) * S2(muqkq);
 }
 
-histo_t kernel_b22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t kernel_b22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t muqkq, histo_t pk_q, histo_t pk_kq)
 {
 	return 0.5 * pk_q * (pk_kq - pk_q);
 }
 
-histo_t kernel_b2s2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t kernel_b2s2(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t muqkq, histo_t pk_q, histo_t pk_kq)
 {
-	return -0.5 * pk_q * (2./3. * pk_q - pk_kq * S2(mukkq));
+	return -0.5 * pk_q * (2./3. * pk_q - pk_kq * S2(muqkq));
 }
 
-histo_t kernel_bs22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t kernel_bs22(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t muqkq, histo_t pk_q, histo_t pk_kq)
 {
-	histo_t s2 = S2(mukkq);
+	histo_t s2 = S2(muqkq);
 	return -0.5 * pk_q * (4./9. * pk_q - pk_kq * s2*s2);
 }
 
-histo_t kernel_sigma3sq(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t mukkq, histo_t pk_q, histo_t pk_kq)
+histo_t kernel_sigma3sq(FLAG a, histo_t q, histo_t kq, histo_t mu, histo_t muqkq, histo_t pk_q, histo_t pk_kq)
 {
-	return 105./16. * pk_q * (D2(mu)*S2(mukkq) + 8./63.);
+	return 105./16. * pk_q * (D2(mu)*S2(muqkq) + 8./63.);
 }
 
 

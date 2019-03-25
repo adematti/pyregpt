@@ -422,7 +422,6 @@ save_reference_spectrum_2loop()
 save_reference_terms_spectrum_2loop()
 """
 
-"""
 test_gauss_legendre()
 test_interpol_poly()
 test_find_pk_lin()
@@ -441,8 +440,6 @@ test_pad()
 test_copy()
 plot_pk_lin()
 plot_spectrum_nowiggle()
-"""
-test_pad()
 
 """
 def debug():

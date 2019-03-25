@@ -156,7 +156,7 @@ class Terms(object):
 	def sigmar(self,r,**kwargs):
 		x = self.k*r
 		w = 3.*(scipy.sin(x)-x*scipy.cos(x))/x**3
-		sigmar2 = 1./2./constants.pi**2*integrate.trapz(self.pk(**kwargs)*(w*k)**2,x=self.k,axis=-1)
+		sigmar2 = 1./2./constants.pi**2*integrate.trapz(self.pk(**kwargs)*(w*self.k)**2,x=self.k,axis=-1)
 		return scipy.sqrt(sigmar2)
 
 class SpectrumLin(Terms):
@@ -475,6 +475,16 @@ class Bias1Loop(PyRegPT):
 		
 		self.regpt.run_terms_bias_1loop.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_bias_1loop(nthreads)
+
+	"""
+	def shotnoise(self,kmin=5e-4,kmax=10.):
+		ones = scipy.ones_like(self.k)
+		mask = self.k>kmax
+		ones[mask] *= scipy.exp(-(self.k[mask]/kmax-1)**2)
+		mask = self.k<kmin
+		ones[mask] *= scipy.exp(-(kmin/self.k[mask]-1)**2)
+		return ones
+	"""
 
 class A1Loop(PyRegPT):
 	

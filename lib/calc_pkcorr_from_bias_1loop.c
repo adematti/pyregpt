@@ -23,10 +23,10 @@ histo_t kernel_pk_bias_1loop(FLAG a,size_t iq, histo_t mu, kernel_bias_1loop ker
 	histo_t pk_q = gauss_legendre_q.pk[iq];
 	histo_t pk_kq;
 	find_pk_lin(&kq,&pk_kq,1,precision_mu.interpol);
-	histo_t mukkq = (k*k - kq*kq - q*q)/2./q/kq;
-	//if (kq/q>10.) mukkq = 1.;
-	
-	return (*kernel)(a,q,kq,mu,mukkq,pk_q,pk_kq); 
+	histo_t muqkq = (k*k - kq*kq - q*q)/2./q/kq;
+	//if (kq/q>10.) muqkq = 1.;
+
+	return (*kernel)(a,q,kq,mu,muqkq,pk_q,pk_kq);
 }
 
 
@@ -79,7 +79,7 @@ histo_t calc_pk_bias_1loop(FLAG a, histo_t k, kernel_bias_1loop kernel, _Bool ru
 		histo_t x = gauss_legendre_q.x[iq];
 		if (!set_mu_range(x,run_half)) continue;
 		
-		histo_t integ_bias=0;
+		histo_t integ_bias = 0.;
 		size_t imu,nmu=gauss_legendre_mu.nmu;
 		
 		for (imu=0;imu<nmu;imu++) integ_bias += kernel_pk_bias_1loop(a,iq,gauss_legendre_mu.mu[imu],kernel) * gauss_legendre_mu.w[imu];
