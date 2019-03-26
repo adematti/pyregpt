@@ -1,4 +1,5 @@
 *.pyc
+*.so
 *~
 tests/*.pyc
 tests/*.py
