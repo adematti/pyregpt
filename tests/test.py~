@@ -307,10 +307,10 @@ def test_A_2loop():
 	k,pklin = load_pklin()
 	pyregpt.set_pk_lin(k,pklin)
 	ref = load_reference_terms_A_2loop()
-	pyregpt.set_terms(ref['k'])
 	pyregpt.set_precision(calculation='gamma1_1loop_q',min=-2,max=-1.,n=300)
 	pyregpt.set_precision(calculation='gamma2_1loop_q',min=-2,max=-1.,n=300)
 	pyregpt.set_precision(calculation='A_2loop_q',min=-2,max=-1.)
+	pyregpt.set_terms(ref['k'])
 	pyregpt.run_terms(nthreads=nthreads)
 	pyregpt.pk()
 	for key in pyregpt:

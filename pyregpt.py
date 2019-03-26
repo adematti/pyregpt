@@ -1,5 +1,3 @@
-# coding: utf8
-
 import os
 import ctypes
 import scipy
@@ -41,7 +39,7 @@ def damping_factor(npk=1):
 		@functools.wraps(func)				
 		def wrapper(self,Dgrowth=1.,sigmad2=None,*args,**kwargs):
 			factor = 0.5 * (self['k']*Dgrowth)**2 * (self['sigmad2'] if sigmad2 is None else sigmad2)
-			regfactor = scipy.exp(-npk*factor)*(1. + factor)**npk
+			regfactor = scipy.exp(-npk*factor)*(1.+factor)**npk
 			return Dgrowth**(2*npk)*regfactor*func(self,*args,**kwargs)
 		return wrapper
 	return _decorate
@@ -86,8 +84,7 @@ class Terms(object):
 				self.columns[key][name] = item
 	
 	def	__contains__(self,name):
-		if name in self.columns: return True
-		return False
+		return name in self.columns
 	
 	def __iter__(self):
 		for field in self.FIELDS:
@@ -159,6 +156,9 @@ class Terms(object):
 		sigmar2 = 1./2./constants.pi**2*integrate.trapz(self.pk(**kwargs)*(w*self.k)**2,x=self.k,axis=-1)
 		return scipy.sqrt(sigmar2)
 
+	def sigma8(self,**kwargs):
+		return self.sigmar(8.,**kwargs)
+
 class SpectrumLin(Terms):
 
 	FIELDS = ['k','pk']
@@ -174,7 +174,7 @@ class SpectrumNoWiggle(SpectrumLin):
 	SCALE = {'k':0,'pk':1}
 	
 	def transfer(self,h=0.676,omega_b=0.022,omega_m=0.21,T_cmb=2.7255,Omega_m=None,Omega_b=None,**kwargs):
-		#Fitting formula for no-wiggle P(k) (Eq.[29] of Eisenstein and Hu 1998)
+		# Fitting formula for no-wiggle P(k) (Eq.[29] of Eisenstein and Hu 1998)
 		if Omega_m is not None: omega_m = Omega_m * h**2
 		if Omega_b is not None: omega_b = Omega_b * h**2
 		frac_baryon  = omega_b / omega_m
