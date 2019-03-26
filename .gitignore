@@ -1,9 +1,6 @@
 *.pyc
 *.so
+*.o
 *~
-tests/*.pyc
-tests/*.py
-tests/*~
-lib/*.o
-lib/*~
+
 
