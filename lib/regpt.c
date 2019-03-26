@@ -22,6 +22,13 @@ void print_num_threads()
 	printf(" - using %zu threads\n",num_threads);
 }
 
+void set_verbosity(char* mode)
+{
+	if (!strcmp(mode,"quiet")) verbose = QUIET;
+	if (!strcmp(mode,"info")) verbose = INFO;
+	if (!strcmp(mode,"debug")) verbose = DEBUG;
+}
+
 void print_pk_lin()
 {
 	printf("*** Linear power spectrum\n");
@@ -51,9 +58,7 @@ void set_num_threads(size_t num_threads)
 		omp_set_num_threads(num_threads);
 		cubacores(num_threads,10000);
 	}
-#ifdef _VERBOSE
-	print_num_threads();
-#endif //_VERBOSE
+	if (verbose == INFO) print_num_threads();
 }
 
 FLAG set_flag(char* flag)
@@ -68,8 +73,8 @@ void set_pk_lin(histo_t* k,histo_t* pk,size_t nk)
 	pk_lin.k = k;
 	pk_lin.pk = pk;
 	pk_lin.nk = nk;
-#ifdef _VERBOSE
-	print_pk_lin();
-	printf("\n");
-#endif //_VERBOSE
+	if (verbose == INFO) {
+		print_pk_lin();
+		printf("\n");
+	}
 }

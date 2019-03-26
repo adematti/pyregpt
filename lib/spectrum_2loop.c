@@ -51,22 +51,21 @@ void set_terms_spectrum_2loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigm
 	terms_2loop.pk_gamma2_1loop_1loop = pk_gamma2_1loop_1loop;
 	terms_2loop.pk_gamma3_tree = pk_gamma3_tree;
 
-#ifdef _VERBOSE
-	print_k(terms_2loop.k,nk);
-	printf("\n");
-#endif //_VERBOSE
+	if (verbose == INFO) {
+		print_k(terms_2loop.k,nk);
+		printf("\n");
+	}
 }
 
 
 void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 {
-
 	FLAG a = set_flag(a_);
 	FLAG b = set_flag(b_);
-#ifdef _VERBOSE
-	printf("*** Calculation of power spectrum at 2 loop\n");
-	print_flags(a,b);
-#endif //_VERBOSE
+	if (verbose == INFO) {
+		printf("*** Calculation of power spectrum at 2 loop\n");
+		print_flags(a,b);
+	}
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_2loop.nk*STEP_VERBOSE/100,1);
@@ -74,7 +73,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 	timer(0);
 	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk_lin);
 	calc_running_sigmad2(terms_2loop.k,terms_2loop.sigmad2,terms_2loop.nk,uvcutoff);
-#pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose) private(ik)
+#pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose,verbose) private(ik)
 	{
 		init_gamma1_1loop();
 		init_gamma1_2loop();
@@ -83,9 +82,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 		init_gamma2t_1loop();
 #pragma omp for nowait schedule(dynamic)
 		for (ik=0;ik<terms_2loop.nk;ik++) {
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			histo_t k = terms_2loop.k[ik];
 			calc_pk_gamma1_2loop(a,b,k,&(terms_2loop.gamma1a_1loop[ik]),&(terms_2loop.gamma1a_2loop[ik]),&(terms_2loop.gamma1b_1loop[ik]),&(terms_2loop.gamma1b_2loop[ik]));
 			calc_pk_gamma2_1loop(a,b,k,&(terms_2loop.pk_gamma2_tree_tree[ik]),&(terms_2loop.pk_gamma2_tree_1loop[ik]),&(terms_2loop.pk_gamma2_1loop_1loop[ik]));
@@ -101,19 +98,12 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 	}
 	init_gamma3_tree();
 	for (ik=0;ik<terms_2loop.nk;ik++) {
-#ifdef _VERBOSE
-		if (ik % step_verbose == 0) printf(" - computation II done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+		if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation II done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 		calc_pk_gamma3_tree(a,b,terms_2loop.k[ik],&(terms_2loop.pk_gamma3_tree[ik]));
 	}
 	free_gamma3_tree();
-	
-#ifdef _VERBOSE
-	timer(1);
-#endif //_VERBOSE
-#ifdef _DEBUgamma
-	write_terms_spectrum_2loop("debug_terms_spectrum_2loop.dat");
-#endif //_DEBUgamma
+	if (verbose == INFO) timer(1);
+	if (verbose == DEBUG) write_terms_spectrum_2loop("debug_terms_spectrum_2loop.dat");
 }
 
 
@@ -139,10 +129,10 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 {
 	FLAG a = set_flag(a_);
 	FLAG b = set_flag(b_);
-#ifdef _VERBOSE
-	printf("*** Calculation of power spectrum at 2 loop\n");
-	print_flags(a,b);
-#endif //_VERBOSE
+	if (verbose == INFO) {
+		printf("*** Calculation of power spectrum at 2 loop\n");
+		print_flags(a,b);
+	}
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_2loop.nk*STEP_VERBOSE/100,1);
@@ -150,7 +140,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 	timer(0);
 	find_pk_lin(terms_2loop.k,terms_2loop.pk_lin,terms_2loop.nk,interpol_pk_lin);
 	calc_running_sigmad2(terms_2loop.k,terms_2loop.sigmad2,terms_2loop.nk,uvcutoff);
-#pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose) private(ik)
+#pragma omp parallel default(none) shared(terms_2loop,a,b,step_verbose,verbose) private(ik)
 	{
 		init_gamma1_1loop();
 		init_gamma1_2loop();
@@ -160,10 +150,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 		init_gamma3_tree();
 #pragma omp for nowait schedule(dynamic)
 		for (ik=0;ik<terms_2loop.nk;ik++) {
-
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			histo_t k = terms_2loop.k[ik];
 			calc_pk_gamma1_2loop(a,b,k,&(terms_2loop.gamma1a_1loop[ik]),&(terms_2loop.gamma1a_2loop[ik]),&(terms_2loop.gamma1b_1loop[ik]),&(terms_2loop.gamma1b_2loop[ik]));
 			calc_pk_gamma2_1loop(a,b,k,&(terms_2loop.pk_gamma2_tree_tree[ik]),&(terms_2loop.pk_gamma2_tree_1loop[ik]),&(terms_2loop.pk_gamma2_1loop_1loop[ik]));
@@ -179,11 +166,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 			free_gamma3_tree();
 		}
 	}
-#ifdef _VERBOSE
-	timer(1);
-#endif //_VERBOSE
-#ifdef _DEBUgamma
-	write_terms_spectrum_2loop("debug_2loop.dat");
-#endif //_DEBUgamma
+	if (verbose == INFO) timer(1);
+	if (verbose == DEBUG) write_terms_spectrum_2loop("debug_terms_spectrum_2loop.dat");
 }
 */

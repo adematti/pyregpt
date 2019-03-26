@@ -72,19 +72,16 @@ void set_terms_bias_1loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigmad2,
 	terms_bias.pk_b2s2 = pk_b2s2;
 	terms_bias.pk_bs22 = pk_bs22;
 	terms_bias.sigma3sq = sigma3sq;
-	
-#ifdef _VERBOSE
-	print_k(terms_bias.k,nk);
-	printf("\n");
-#endif //_VERBOSE
+
+	if (verbose == INFO) {
+		print_k(terms_bias.k,nk);
+		printf("\n");
+	}
 }
 
 void run_terms_bias_1loop(size_t num_threads)
 {
-
-#ifdef _VERBOSE
-	printf("*** Calculation of bias terms at 1 loop\n");
-#endif //_VERBOSE
+	if (verbose == INFO) printf("*** Calculation of bias terms at 1 loop\n");
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_bias.nk*STEP_VERBOSE/100,1);
@@ -92,15 +89,13 @@ void run_terms_bias_1loop(size_t num_threads)
 	timer(0);
 	find_pk_lin(terms_bias.k,terms_bias.pk_lin,terms_bias.nk,interpol_pk_lin);
 	calc_running_sigmad2(terms_bias.k,terms_bias.sigmad2,terms_bias.nk,uvcutoff);
-#pragma omp parallel default(none) shared(terms_bias,step_verbose) private(ik)
+#pragma omp parallel default(none) shared(terms_bias,step_verbose,verbose) private(ik)
 	{
 		init_bias_1loop();
 #pragma omp for nowait schedule(dynamic)
 		for (ik=0;ik<terms_bias.nk;ik++) {
 			histo_t k = terms_bias.k[ik];
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			terms_bias.pk_b2d[ik] = calc_pk_bias_1loop(DELTA,k,kernel_b2,1);
 			//terms_bias.pk_b2d[ik] = calc_pk_bias_1loop(DELTA,k,kernel_b2,0);
 			terms_bias.pk_bs2d[ik] = calc_pk_bias_1loop(DELTA,k,kernel_bs2,1);
@@ -116,8 +111,5 @@ void run_terms_bias_1loop(size_t num_threads)
 			free_bias_1loop();
 		}
 	}
-	
-#ifdef _VERBOSE
-	timer(1);
-#endif //_VERBOSE
+	if (verbose == INFO) timer(1);
 }

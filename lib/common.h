@@ -5,6 +5,8 @@
 
 // ios
 
+void set_verbosity(char* mode);
+
 void error_open_file(char *fname);
 
 void print_num_threads();

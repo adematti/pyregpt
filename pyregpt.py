@@ -211,6 +211,7 @@ class PyRegPT(Terms):
 		super(PyRegPT, self).__init__(*args,**kwargs)
 		#cuba = ctypes.CDLL(self.pkTH_CUBA,mode=ctypes.RTLD_GLOBAL)
 		self.regpt = ctypes.CDLL(self.PATH_REGPT,mode=ctypes.RTLD_GLOBAL)
+		self.set_verbosity(self._verbose if hasattr(self,'_verbose') else 'info')
 
 	def nodes_weights_gauss_legendre(self,xmin,xmax,nx):
 
@@ -256,6 +257,11 @@ class PyRegPT(Terms):
 		self.regpt.calc_running_sigmad2(k,sigmad2,len(k),uvcutoff)
 
 		return sigmad2
+
+	def set_verbosity(self,mode='info'):
+		self.regpt.set_verbosity.argtypes = (ctypes.c_char_p,)
+		self.regpt.set_verbosity(mode)
+		self._verbose = mode
 		
 	def set_spectrum_lin(self,spectrum_lin):
 	
@@ -345,6 +351,7 @@ class PyRegPT(Terms):
 		#To reset all precision settings
 		self.set_precision(calculation='all',n=0,min=1.,max=-1.,interpol='test')
 		self.set_running_uvcutoff(calculation='all')
+		self.set_verbosity()
 
 class Spectrum1Loop(PyRegPT):
 

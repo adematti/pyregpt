@@ -32,18 +32,15 @@ void set_terms_A_2loop(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigmad2,his
 	terms_A.sigmad2 = sigmad2;
 	terms_A.A = A;
 	
-#ifdef _VERBOSE
-	print_k(terms_A.k,nk);
-	printf("\n");
-#endif //_VERBOSE
+	if (verbose == INFO) {
+		print_k(terms_A.k,nk);
+		printf("\n");
+	}
 }
 
 void run_terms_A_2loop(size_t num_threads)
 {
-
-#ifdef _VERBOSE
-	printf("*** Calculation of A term at 2 loop\n");
-#endif //_VERBOSE
+	if (verbose == INFO) printf("*** Calculation of A term at 2 loop\n");
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_A.nk*STEP_VERBOSE/100,1);
@@ -52,14 +49,12 @@ void run_terms_A_2loop(size_t num_threads)
 	timer(0);
 	find_pk_lin(terms_A.k,terms_A.pk_lin,terms_A.nk,interpol_pk_lin);
 	calc_running_sigmad2(terms_A.k,terms_A.sigmad2,terms_A.nk,uvcutoff);
-#pragma omp parallel default(none) shared(terms_A,step_verbose) private(ik,pk_A)
+#pragma omp parallel default(none) shared(terms_A,step_verbose,verbose) private(ik,pk_A)
 	{
 		init_A_2loop_I();
 #pragma omp for nowait schedule(dynamic)
 		for (ik=0;ik<terms_A.nk;ik++) {
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			histo_t k = terms_A.k[ik];
 			calc_pk_A_2loop_I(k,pk_A);
 			terms_A.A[ik*NCOMP] = pk_A[0] + pk_A[6];								//pk_A111 + pk_tA111, mu^2 * f
@@ -78,9 +73,7 @@ void run_terms_A_2loop(size_t num_threads)
 	}
 	init_A_2loop_II_III();
 	for (ik=0;ik<terms_A.nk;ik++) {
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation II done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation II done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 		histo_t k = terms_A.k[ik];
 		calc_pk_A_2loop_II_III(k,pk_A);
 		terms_A.A[ik*NCOMP] += pk_A[0] + pk_A[6];									//pk_A111 + pk_tA111, mu^2 * f
@@ -90,18 +83,14 @@ void run_terms_A_2loop(size_t num_threads)
 		terms_A.A[ik*NCOMP+4] += pk_A[5] + pk_A[11];								//pk_A322 + pk_tA322, mu^6 * f^3
 	}
 	free_A_2loop_II_III();
-#ifdef _VERBOSE
-	timer(1);
-#endif //_VERBOSE
+	if (verbose == INFO) timer(1);
 }
 
 /*
 void run_terms_A_2loop(size_t num_threads)
 {
 
-#ifdef _VERBOSE
-	printf("*** Calculation of A term at 2 loop\n");
-#endif //_VERBOSE
+	if (verbose == INFO) printf("*** Calculation of A term at 2 loop\n");
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_A.nk*STEP_VERBOSE/100,1);
@@ -110,16 +99,14 @@ void run_terms_A_2loop(size_t num_threads)
 	timer(0);
 	find_pk_lin(terms_A.k,terms_A.pk_lin,terms_A.nk,interpol_pk_lin);
 	calc_running_sigmad2(terms_A.k,terms_A.sigmad2,terms_A.nk,uvcutoff);
-#pragma omp parallel default(none) shared(terms_A,step_verbose) private(ik,pk_A)
+#pragma omp parallel default(none) shared(terms_A,step_verbose,verbose) private(ik,pk_A)
 	{
 		init_A_2loop_I();
 		init_A_2loop_II_III();
 #pragma omp for nowait schedule(dynamic)
 		for (ik=0;ik<terms_A.nk;ik++) {
 			histo_t k = terms_A.k[ik];
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			calc_pk_A_2loop_I(k,pk_A);
 			terms_A.A[ik*NCOMP] = pk_A[0] + pk_A[6];								//pk_A111 + pk_tA111, mu^2 * f
 			terms_A.A[ik*NCOMP+1] = pk_A[1] + pk_A[7];								//pk_A121 + pk_tA121, mu^2 * f^2
@@ -139,9 +126,7 @@ void run_terms_A_2loop(size_t num_threads)
 			free_A_2loop_II_III();
 		}
 	}
-#ifdef _VERBOSE
-	timer(1);
-#endif //_VERBOSE
+	if (verbose == INFO) timer(1);
 }
 */
 

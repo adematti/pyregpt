@@ -232,7 +232,6 @@ void calc_running_sigmad2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff
 	}
 }
 
-
 _Bool set_precision(Precision *precision,size_t n,histo_t min,histo_t max,char *interpol,const Precision *precision_default)
 {
 	_Bool change = 0;

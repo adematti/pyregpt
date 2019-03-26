@@ -14,6 +14,7 @@ typedef float histo_t;
 typedef double histo_t;
 #endif //_FLOAT32
 
+typedef enum {QUIET, INFO, DEBUG} VERBOSITY;
 typedef enum {DELTA, THETA} FLAG;
 typedef enum {LIN, POLY} INTERPOL;
 
@@ -103,6 +104,7 @@ typedef struct {
 	histo_t* B;
 } TermsB;
 
+VERBOSITY verbose;
 Pk pk_lin;
 
 #endif //_REgammaPT_DEFINE_

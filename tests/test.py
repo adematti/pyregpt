@@ -363,6 +363,22 @@ def test_bias_1loop():
 			print('{} ok'.format(key))
 	pyregpt.clear()
 
+def test_verbosity():
+	pyregpt = Bias1Loop()
+	pyregpt.set_verbosity('quiet')
+	print('No output in between <<')
+	k,pklin = load_pklin()
+	pyregpt.set_pk_lin(k,pklin)
+	ref = load_reference_terms_bias_1loop()
+	pyregpt.set_terms(ref['k'])
+	pyregpt.run_terms(nthreads=nthreads)
+	print('>>')
+	for key in pyregpt:
+		if key in ref.dtype.names:
+			testing.assert_allclose(pyregpt[key],ref[key],rtol=1e-6,atol=1e-7)
+			print('{} ok'.format(key))
+	pyregpt.clear()
+
 def test_pad(a='delta',b='delta'):
 	k,pklin = load_pklin()
 	pyregpt = Spectrum2Loop()
@@ -434,6 +450,7 @@ test_A_2loop()
 test_B_1loop()
 test_B_2loop()
 test_bias_1loop()
+test_verbosity()
 test_pad()
 test_copy()
 plot_pk_lin()

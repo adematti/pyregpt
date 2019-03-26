@@ -47,11 +47,11 @@ void set_terms_B(size_t nk,histo_t* k,histo_t* pk_lin,histo_t* sigmad2,histo_t* 
 	terms_B.pk_lin = pk_lin;
 	terms_B.sigmad2 = sigmad2;
 	terms_B.B = B;
-	
-#ifdef _VERBOSE
-	print_k(terms_B.k,nk);
-	printf("\n");
-#endif //_VERBOSE
+
+	if (verbose == INFO) {
+		print_k(terms_B.k,nk);
+		printf("\n");
+	}
 }
 
 void set_spectra_B(char* a_,char* b_, size_t nk, histo_t *k, histo_t *pk)
@@ -63,15 +63,11 @@ void set_spectra_B(char* a_,char* b_, size_t nk, histo_t *k, histo_t *pk)
 	FLAG a = set_flag(a_);
 	FLAG b = set_flag(b_);
 	if (((a==DELTA)&&(b=THETA))||((a==THETA)&&(b==DELTA))) {
-#ifdef _VERBOSE
-		printf(" - setting P_delta_theta\n");
-#endif //_VERBOSE
+		if (verbose == INFO) printf(" - setting P_delta_theta\n");
 		pk_dt = pk_ab;
 	}
 	if ((a==THETA)&&(b==THETA)) {
-#ifdef _VERBOSE
-		printf(" - setting P_theta_theta\n");
-#endif //_VERBOSE
+		if (verbose == INFO) printf(" - setting P_theta_theta\n");
 		pk_tt = pk_ab;
 	}
 }
@@ -103,10 +99,7 @@ void free_spectra_B()
 
 void run_terms_B(size_t num_threads)
 {
-
-#ifdef _VERBOSE
-	printf("*** Calculation of B term\n");
-#endif //_VERBOSE
+	if (verbose == INFO) printf("*** Calculation of B term\n");
 	set_num_threads(num_threads);
 	size_t ik=0;
 	size_t step_verbose = MAX(terms_B.nk*STEP_VERBOSE/100,1);
@@ -121,18 +114,14 @@ void run_terms_B(size_t num_threads)
 		free_spectra = 1; 
 		run_spectra_B_1loop(num_threads);
 	}
-#ifdef _DEBUgamma
-	write_spectra_B("debug_spectra_B.dat");
-#endif //_DEBUgamma
-#pragma omp parallel default(none) shared(terms_B,step_verbose,pk_dt,pk_tt) private(ik,pk_B)
+	if (verbose == DEBUG) write_spectra_B("debug_spectra_B.dat");
+#pragma omp parallel default(none) shared(terms_B,pk_dt,pk_tt,step_verbose,verbose) private(ik,pk_B)
 	{
 		init_B(pk_dt,pk_tt);
 #pragma omp for nowait schedule(dynamic)
 		for (ik=0;ik<terms_B.nk;ik++) {
 			histo_t k = terms_B.k[ik];
-#ifdef _VERBOSE
-			if (ik % step_verbose == 0) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
-#endif //_VERBOSE
+			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			calc_pk_B(k,pk_B);
 			terms_B.B[ik*NCOMP] = pk_B[0];					//pk_B111, mu^2 * f^2
 			terms_B.B[ik*NCOMP+1] = - (pk_B[1] + pk_B[2]);	//pk_B112 + pk_B121, mu^2 * f^3 
@@ -150,7 +139,5 @@ void run_terms_B(size_t num_threads)
 		}
 	}
 	if (free_spectra) free_spectra_B();
-#ifdef _VERBOSE
-	timer(1);
-#endif //_VERBOSE
+	if (verbose == INFO) timer(1);
 }
