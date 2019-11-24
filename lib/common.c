@@ -1,6 +1,6 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <string.h>
 #include <time.h>
 #include "define.h"
@@ -259,7 +259,7 @@ _Bool set_interpol(INTERPOL *current,char *new)
 		return 1;
 	}
 	else if (!strcmp(new,"lin")) {
-		*current=LIN;
+		*current = LIN;
 		return 1;
 	}
 	return 0;
@@ -304,7 +304,7 @@ void nodes_weights_gauss_legendre(histo_t xmin,histo_t xmax,histo_t *x,histo_t *
 	}
 }
 
-void init_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,Precision *precision)
+void init_gauss_legendre_q(GaussLegendreQ *gauss_legendre,Precision *precision)
 {
 	histo_t qmin=precision->min,qmax=precision->max;
 	if ((qmin<=0.)||(qmax<=0.)) {
@@ -330,7 +330,7 @@ void init_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,Precision *precisi
 	find_pk_lin(gauss_legendre->q,gauss_legendre->pk,nq,precision->interpol);
 }
 
-void update_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,histo_t k)
+void update_gauss_legendre_q(GaussLegendreQ *gauss_legendre,histo_t k)
 {
 	gauss_legendre->k = k;
 	size_t iq;
@@ -338,7 +338,7 @@ void update_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,histo_t k)
 }
 
 
-void free_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre)
+void free_gauss_legendre_q(GaussLegendreQ *gauss_legendre)
 {
 	free(gauss_legendre->x);
 	free(gauss_legendre->q);
@@ -347,7 +347,7 @@ void free_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre)
 }
 
 
-void init_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,Precision *precision)
+void init_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,Precision *precision)
 {
 	histo_t mumin=-1.,mumax=1.;
 	size_t size = sizeof(histo_t);
@@ -367,7 +367,7 @@ void init_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,Precision *preci
 	}
 }
 
-void update_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax)
+void update_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax)
 {
 	//gauss_legendre->mumin = mumin;
 	//gauss_legendre->mumin = mumin;
@@ -379,7 +379,7 @@ void update_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,histo_t mumin,
 	}
 }
 
-void free_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre)
+void free_gauss_legendre_mu(GaussLegendreMu *gauss_legendre)
 {
 	free(gauss_legendre->muref);
 	free(gauss_legendre->wref);
@@ -451,7 +451,7 @@ void error_open_file(char *fname)
 	exit(1);
 }
 
-void write_gauss_legendre_q(gammaaussLegendreQ gauss_legendre,char *fn)
+void write_gauss_legendre_q(GaussLegendreQ gauss_legendre,char *fn)
 {
 	//////
 	// Writes gauss legendre terms into file fn, only used for debugging
@@ -463,7 +463,7 @@ void write_gauss_legendre_q(gammaaussLegendreQ gauss_legendre,char *fn)
 	fclose(fr);
 }
 
-void write_gauss_legendre_mu(gammaaussLegendreMu gauss_legendre,char *fn)
+void write_gauss_legendre_mu(GaussLegendreMu gauss_legendre,char *fn)
 {
 	//////
 	// Writes gauss legendre terms into file fn, only used for debugging

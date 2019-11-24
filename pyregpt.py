@@ -3,7 +3,6 @@ import ctypes
 import scipy
 from scipy import constants,integrate
 import functools
-import copy
 from numpy import ctypeslib
 
 """
@@ -96,7 +95,7 @@ class Terms(object):
 	def pop(self,key):
 		return self.columns.pop(key)
 
-	def getstate(self,fields=None):
+	def as_dict(self,fields=None):
 		if fields is None: fields = self.fields
 		return {field:self[field] for field in fields}
 
@@ -173,7 +172,7 @@ class SpectrumNoWiggle(SpectrumLin):
 	FIELDS = ['k','pk']
 	SCALE = {'k':0,'pk':1}
 	
-	def transfer(self,h=0.676,omega_b=0.022,omega_m=0.21,T_cmb=2.7255,Omega_m=None,Omega_b=None,**kwargs):
+	def transfer(self,h=0.676,omega_b=0.022,omega_m=0.21,T_cmb=2.7255,Omega_m=None,Omega_b=None):
 		# Fitting formula for no-wiggle P(k) (Eq.[29] of Eisenstein and Hu 1998)
 		if Omega_m is not None: omega_m = Omega_m * h**2
 		if Omega_b is not None: omega_b = Omega_b * h**2
@@ -191,14 +190,15 @@ class SpectrumNoWiggle(SpectrumLin):
 	def set_terms(self,k):
 		self.zeros(k=k)
 	
-	def run_terms(self,pk,n_s=1.,**kwargs):
+	def run_terms(self,pk=None,A=None,n_s=1.,**kwargs):
 		pknowiggle = self.k**n_s*self.transfer(**kwargs)**2
-		self['pk'] = pknowiggle*pk[0]/pknowiggle[0]
+		if A is None: A = pk[0]/pknowiggle[0]
+		self['pk'] = A*pknowiggle
 	
 	@scale_factor(1)
 	def pk(self):
 		return self['pk']
-	
+
 
 class PyRegPT(Terms):
 
@@ -209,8 +209,8 @@ class PyRegPT(Terms):
 	def __init__(self,*args,**kwargs):
 
 		super(PyRegPT, self).__init__(*args,**kwargs)
-		#cuba = ctypes.CDLL(self.pkTH_CUBA,mode=ctypes.RTLD_GLOBAL)
-		self.regpt = ctypes.CDLL(self.PATH_REGPT,mode=ctypes.RTLD_GLOBAL)
+		#cuba = ctypes.CDLL(self.PATH_CUBA,mode=ctypes.RTLD_GLOBAL)
+		self.regpt = ctypes.CDLL(self.PATH_REGPT,mode=ctypes.RTLD_LOCAL)
 		self.set_verbosity(self._verbose if hasattr(self,'_verbose') else 'info')
 
 	def nodes_weights_gauss_legendre(self,xmin,xmax,nx):
@@ -272,13 +272,10 @@ class PyRegPT(Terms):
 
 	def set_pk_lin(self,k,pk):
 
-		self.spectrum_lin = SpectrumLin()
-		self.spectrum_lin['k'] = scipy.asarray(k,dtype=self.C_TYPE).flatten()
-		self.spectrum_lin['pk'] = scipy.asarray(pk,dtype=self.C_TYPE).flatten()
-
-		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
-		self.regpt.set_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t)
-		self.regpt.set_pk_lin(self.spectrum_lin['k'],self.spectrum_lin['pk'],self.spectrum_lin.size)
+		spectrum_lin = SpectrumLin()
+		spectrum_lin['k'] = scipy.asarray(k,dtype=self.C_TYPE).flatten()
+		spectrum_lin['pk'] = scipy.asarray(pk,dtype=self.C_TYPE).flatten()
+		self.set_spectrum_lin(spectrum_lin)
 
 	def set_precision(self,calculation='all_q',n=0,min=1.,max=-1.,interpol='test'):
 	

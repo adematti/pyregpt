@@ -420,9 +420,34 @@ def plot_spectrum_nowiggle():
 	from matplotlib import pyplot
 	k,pklin = load_pklin()
 	spectrum_nowiggle = SpectrumNoWiggle(k=k)
-	spectrum_nowiggle.run_terms(pk=pklin,**{'Omega_m':0.31,'omega_b':0.022,'h':0.676,'sigma8':0.8,'n_s':0.96,'N_ur':2.0328,'N_ncdm':1,'m_ncdm':0.06,'z_pk':0.86,'input_verbose':1})
+	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,sigma8=0.8,n_s=0.97,N_ur=2.0328,m_ncdm=[0.06])
+	spectrum_nowiggle.run_terms(pk=pklin,**cosmo_kwargs)
 	pyplot.loglog(k,pklin,label='$P_{\\rm lin}$')
 	pyplot.loglog(k,spectrum_nowiggle.pk(),label='$P_{\\rm nowiggle}$')
+	pyplot.legend()
+	pyplot.show()
+	
+def plot_spectrum_nowiggle_comparison():
+
+	from matplotlib import pyplot
+	k,pklin = load_pklin()
+	spectrum_nowiggle = SpectrumNoWiggle(k=k)
+	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,sigma8=0.8,n_s=0.97)
+	spectrum_nowiggle.run_terms(pk=pklin,**cosmo_kwargs)
+	tk = spectrum_nowiggle.transfer()
+	
+	from nbodykit.cosmology.power.transfers import NoWiggleEisensteinHu
+	from nbodykit import cosmology
+	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,sigma8=0.8,n_s=0.97,N_ur=2.0328,m_ncdm=[0.06])
+	cosmo_kwargs['Omega0_b'] = cosmo_kwargs.pop('omega_b')/cosmo_kwargs['h']**2
+	Omega0_m = cosmo_kwargs.pop('Omega_m')
+	sigma8 = cosmo_kwargs.pop('sigma8')
+	cosmo = cosmology.Cosmology(**cosmo_kwargs).match(Omega0_m=Omega0_m).match(sigma8=sigma8)
+	eh = NoWiggleEisensteinHu(cosmo,redshift=0.)(k)
+	
+	pyplot.loglog(k,pklin,label='$P_{\\rm lin}$')
+	pyplot.loglog(k,tk,label='$P_{\\rm nowiggle}$')
+	pyplot.loglog(k,eh,label='nbodykit')
 	pyplot.legend()
 	pyplot.show()
 
@@ -455,7 +480,7 @@ test_pad()
 test_copy()
 plot_pk_lin()
 plot_spectrum_nowiggle()
-
+#plot_spectrum_nowiggle_comparison()
 """
 def debug():
 	k,_,_,pk_ref_dt,pk_ref_tt = scipy.loadtxt('ref_spectra_B.dat',unpack=True)

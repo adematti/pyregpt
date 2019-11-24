@@ -1,5 +1,5 @@
-#ifndef _REgammaPT_COMMON_
-#define _REgammaPT_COMMON_
+#ifndef _REGPT_COMMON_
+#define _REGPT_COMMON_
 
 #define EPS 3.e-14
 
@@ -61,17 +61,17 @@ void calc_running_sigmad2(histo_t *k,histo_t *sigmad2,size_t nk,histo_t uvcutoff
 
 void nodes_weights_gauss_legendre(histo_t xmin,histo_t xmax,histo_t *x,histo_t *w,size_t n);
 
-void init_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,Precision *precision);
+void init_gauss_legendre_q(GaussLegendreQ *gauss_legendre,Precision *precision);
 
-void update_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre,histo_t k);
+void update_gauss_legendre_q(GaussLegendreQ *gauss_legendre,histo_t k);
 
-void free_gauss_legendre_q(gammaaussLegendreQ *gauss_legendre);
+void free_gauss_legendre_q(GaussLegendreQ *gauss_legendre);
 
-void init_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,Precision *precision);
+void init_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,Precision *precision);
 
-void update_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax);
+void update_gauss_legendre_mu(GaussLegendreMu *gauss_legendre,histo_t mumin,histo_t mumax);
 
-void free_gauss_legendre_mu(gammaaussLegendreMu *gauss_legendre);
+void free_gauss_legendre_mu(GaussLegendreMu *gauss_legendre);
 
 // precision setters
 
@@ -241,8 +241,8 @@ void calc_pk_B(histo_t k, histo_t* B);
 
 void timer(size_t i);
 
-void write_gauss_legendre_q(gammaaussLegendreQ gauss_legendre,char *fn);
+void write_gauss_legendre_q(GaussLegendreQ gauss_legendre,char *fn);
 
-void write_gauss_legendre_mu(gammaaussLegendreMu gauss_legendre,char *fn);
+void write_gauss_legendre_mu(GaussLegendreMu gauss_legendre,char *fn);
 
-#endif
+#endif //_REGPT_COMMON_

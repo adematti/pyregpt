@@ -5,8 +5,8 @@
 #include "common.h"
 #include "kernels.h"
 
-static gammaaussLegendreQ gauss_legendre_q;
-static gammaaussLegendreMu gauss_legendre_mu;
+static GaussLegendreQ gauss_legendre_q;
+static GaussLegendreMu gauss_legendre_mu;
 #pragma omp threadprivate(gauss_legendre_q,gauss_legendre_mu)
 static const Precision precision_q_default = {.n=200,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=200,.min=5e-4,.max=10.,.interpol=POLY};

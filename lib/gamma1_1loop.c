@@ -4,7 +4,7 @@
 #include "define.h"
 #include "common.h"
 
-static gammaaussLegendreQ gauss_legendre_q;
+static GaussLegendreQ gauss_legendre_q;
 #pragma omp threadprivate(gauss_legendre_q)
 static const Precision precision_q_default = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
 static Precision precision_q = {.n=600,.min=5e-4,.max=10.,.interpol=POLY};
@@ -83,5 +83,3 @@ void free_gamma1_1loop()
 {
 	free_gauss_legendre_q(&gauss_legendre_q);
 }
-
-

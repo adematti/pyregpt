@@ -1,5 +1,5 @@
-#ifndef _REgammaPT_DEFINE_
-#define _REgammaPT_DEFINE_
+#ifndef _REGPT_DEFINE_
+#define _REGPT_DEFINE_
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b)) //Maximum of two numbers
 #define MIN(a, b) (((a) < (b)) ? (a) : (b)) //Minimum of two numbers
@@ -32,7 +32,7 @@ typedef struct {
 	histo_t *q;
 	histo_t *w;
 	histo_t *pk;
-} gammaaussLegendreQ;
+} GaussLegendreQ;
 
 typedef struct {
 	size_t nmu;
@@ -40,7 +40,7 @@ typedef struct {
 	histo_t *wref;
 	histo_t *mu;
 	histo_t *w;
-} gammaaussLegendreMu;
+} GaussLegendreMu;
 
 typedef struct {
 	size_t nk;
@@ -107,4 +107,4 @@ typedef struct {
 VERBOSITY verbose;
 Pk pk_lin;
 
-#endif //_REgammaPT_DEFINE_
+#endif //_REGPT_DEFINE_
