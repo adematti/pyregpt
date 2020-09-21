@@ -411,16 +411,33 @@ def plot_pk_lin():
 	kout = scipy.logspace(scipy.log10(k[0])-2,scipy.log10(k[-1])+1,1000,base=10)
 	for interpol in ['lin','poly']:
 		pyplot.loglog(kout,pyregpt.find_pk_lin(kout,interpol=interpol),label=interpol)
-	pyplot.legend()
 	pyplot.axvline(x=k[0],ymin=0.,ymax=1.)
 	pyplot.axvline(x=k[-1],ymin=0.,ymax=1.)
+	pyplot.legend()
+	pyplot.show()
+
+def plot_regpt():
+	kmin,kmax = 1e-3,5e-1
+	k,pklin = scipy.loadtxt('matterpower_wmap5.dat',unpack=True)
+	pyregpt = Spectrum2Loop()
+	pyregpt.set_pk_lin(k,pklin)
+	k,pk = scipy.loadtxt('pk_RegPT_spectrum.dat',usecols=[0,3],unpack=True)
+	kmask = (k>kmin) & (k<kmax)
+	k,pk = k[kmask],pk[kmask]
+	pyregpt.set_terms(k)
+	pyregpt.run_terms('delta','delta',nthreads=nthreads)
+	from matplotlib import pyplot
+	pyplot.plot(k,pyregpt.pk()/pk,label='pyregpt/regpt')
+	#pyplot.plot(k,k*pk,label='regpt')
+	#pyplot.plot(pyregpt.k,pyregpt.k*pyregpt.pk(),label='pyregpt')
+	pyplot.xlim(kmin,kmax)
 	pyplot.show()
 
 def plot_spectrum_nowiggle():
 	from matplotlib import pyplot
 	k,pklin = load_pklin()
 	spectrum_nowiggle = SpectrumNoWiggle(k=k)
-	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,sigma8=0.8,n_s=0.97,N_ur=2.0328,m_ncdm=[0.06])
+	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,n_s=0.97)
 	spectrum_nowiggle.run_terms(pk=pklin,**cosmo_kwargs)
 	pyplot.loglog(k,pklin,label='$P_{\\rm lin}$')
 	pyplot.loglog(k,spectrum_nowiggle.pk(),label='$P_{\\rm nowiggle}$')
@@ -432,7 +449,7 @@ def plot_spectrum_nowiggle_comparison():
 	from matplotlib import pyplot
 	k,pklin = load_pklin()
 	spectrum_nowiggle = SpectrumNoWiggle(k=k)
-	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,sigma8=0.8,n_s=0.97)
+	cosmo_kwargs = dict(Omega_m=0.31,omega_b=0.022,h=0.676,n_s=0.97)
 	spectrum_nowiggle.run_terms(pk=pklin,**cosmo_kwargs)
 	tk = spectrum_nowiggle.transfer()
 	
@@ -481,6 +498,7 @@ test_copy()
 plot_pk_lin()
 plot_spectrum_nowiggle()
 #plot_spectrum_nowiggle_comparison()
+plot_regpt()
 """
 def debug():
 	k,_,_,pk_ref_dt,pk_ref_tt = scipy.loadtxt('ref_spectra_B.dat',unpack=True)

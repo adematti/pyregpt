@@ -266,6 +266,7 @@ class PyRegPT(Terms):
 	def set_spectrum_lin(self,spectrum_lin):
 	
 		self.spectrum_lin = spectrum_lin
+		for key in ['k','pk']: self.spectrum_lin[key] = scipy.array(self.spectrum_lin[key],dtype=self.C_TYPE)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
 		self.regpt.set_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t)
 		self.regpt.set_pk_lin(self.spectrum_lin.k,self.spectrum_lin['pk'],self.spectrum_lin.size)
