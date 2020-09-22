@@ -16,18 +16,18 @@ All tests are in tests/.
 Installation
 ------------
 
-First download Cuba-4.1 (http://www.feynarts.de/cuba/) and install:\
+First download Cuba-4.1 (http://www.feynarts.de/cuba/) and in Cuba-4.1 run:\
 $ ./configure\
-Then make shared library (credits to https://github.com/JohannesBuchner/cuba):\
+Then make shared library (credits to http://github.com/JohannesBuchner/cuba/) following:\
 $ sed 's/CFLAGS = -O3 -fomit-frame-pointer/CFLAGS = -O3 -fPIC -fomit-frame-pointer/g' --in-place makefile\
 $ make -B libcuba.a\
 $ gcc -shared -Wall $(ar xv libcuba.a |sed 's/x - //g') -lm -o libcuba.so\
 Export CUBA path:\
 $ export CUBA=$(pwd)\
 \
-To compile the C code:\
+To compile the C code, in pyregpt run:\
 $ make clean\
-$ make\
+$ make
 
 Requirements
 ------------
