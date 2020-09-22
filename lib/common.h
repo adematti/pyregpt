@@ -25,7 +25,7 @@ void set_pk_lin(histo_t* k,histo_t* pk,size_t nk);
 
 // usual functions
 
-inline histo_t my_abs(histo_t x);
+histo_t my_abs(histo_t x);
 
 histo_t my_log(histo_t x);
 

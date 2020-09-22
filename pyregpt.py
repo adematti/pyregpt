@@ -67,7 +67,7 @@ class Terms(object):
 		return str(self.__dict__)
 
 	def __getitem__(self,name):
-		if isinstance(name,(str,unicode)):
+		if isinstance(name,str):
 			if name in self.fields:
 				return self.columns[name]
 			else:
@@ -76,7 +76,7 @@ class Terms(object):
 			return self.__class__(**{key:self.columns[key][name] for key in self.fields})	
 	
 	def __setitem__(self,name,item):
-		if isinstance(name,(str,unicode)):
+		if isinstance(name,str):
 			self.columns[name] = item
 		else:
 			for key in self.fields:
@@ -260,13 +260,12 @@ class PyRegPT(Terms):
 
 	def set_verbosity(self,mode='info'):
 		self.regpt.set_verbosity.argtypes = (ctypes.c_char_p,)
-		self.regpt.set_verbosity(mode)
+		self.regpt.set_verbosity(mode.encode('utf-8'))
 		self._verbose = mode
 		
 	def set_spectrum_lin(self,spectrum_lin):
 	
 		self.spectrum_lin = spectrum_lin
-		for key in ['k','pk']: self.spectrum_lin[key] = scipy.array(self.spectrum_lin[key],dtype=self.C_TYPE)
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
 		self.regpt.set_pk_lin.argtypes = (pointer,pointer,ctypes.c_size_t)
 		self.regpt.set_pk_lin(self.spectrum_lin.k,self.spectrum_lin['pk'],self.spectrum_lin.size)
@@ -314,16 +313,16 @@ class PyRegPT(Terms):
 		func = getattr(self.regpt,'set_precision_'+calculation)
 		if 'pk_lin' in calculation:
 			func.argtypes = (ctypes.c_char_p,)
-			func(interpol)
+			func(interpol.encode('utf-8'))
 		elif calculation in ['gamma3_tree_q','A_2loop_II_III_q']:
 			func.argtypes = (self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
-			func(min,max,interpol)
+			func(min,max,interpol.encode('utf-8'))
 		elif 'mu' in calculation:
 			func.argtypes = (ctypes.c_size_t,ctypes.c_char_p)
-			func(n,interpol)
+			func(n,interpol.encode('utf-8'))
 		else:
 			func.argtypes = (ctypes.c_size_t,self.C_TYPE,self.C_TYPE,ctypes.c_char_p)
-			func(n,min,max,interpol)
+			func(n,min,max,interpol.encode('utf-8'))
 
 	def set_running_uvcutoff(self,calculation='all',uvcutoff=0.5):
 
@@ -366,7 +365,7 @@ class Spectrum1Loop(PyRegPT):
 	def run_terms(self,a='delta',b='delta',nthreads=8):
 		
 		self.regpt.run_terms_spectrum_1loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
-		self.regpt.run_terms_spectrum_1loop(a,b,nthreads)
+		self.regpt.run_terms_spectrum_1loop(a.encode('utf-8'),b.encode('utf-8'),nthreads)
 
 	@scale_factor(1)
 	def pk_lin(self):
@@ -399,7 +398,7 @@ class Spectrum2Loop(Spectrum1Loop):
 	def run_terms(self,a='delta',b='delta',nthreads=8):
 		
 		self.regpt.run_terms_spectrum_2loop.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t)
-		self.regpt.run_terms_spectrum_2loop(a,b,nthreads)
+		self.regpt.run_terms_spectrum_2loop(a.encode('utf-8'),b.encode('utf-8'),nthreads)
 	
 	def pk(self,Dgrowth=1.,sigmad2=None):
 		#Dgrowth is Dgrowth or sigma8...
@@ -571,8 +570,8 @@ class B1Loop(PyRegPT):
 		
 		pointer = ctypeslib.ndpointer(dtype=self.C_TYPE,shape=(self.spectrum_lin.size,))
 		self.regpt.set_spectra_B.argtypes = (ctypes.c_char_p,ctypes.c_char_p,ctypes.c_size_t,pointer,pointer)
-		self.regpt.set_spectra_B('delta','theta',self.spectrum_lin.size,self.spectrum_lin.k,self.spectrum_lin['pk'])
-		self.regpt.set_spectra_B('theta','theta',self.spectrum_lin.size,self.spectrum_lin.k,self.spectrum_lin['pk'])
+		self.regpt.set_spectra_B('delta'.encode('utf-8'),'theta'.encode('utf-8'),self.spectrum_lin.size,self.spectrum_lin.k,self.spectrum_lin['pk'])
+		self.regpt.set_spectra_B('theta'.encode('utf-8'),'theta'.encode('utf-8'),self.spectrum_lin.size,self.spectrum_lin.k,self.spectrum_lin['pk'])
 		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_B(nthreads)
 	
@@ -613,8 +612,8 @@ class B2Loop(B1Loop):
 		pk_dt = self.spectrum_1loop_dt.pk() # why do I have to do that?
 		pk_tt = self.spectrum_1loop_tt.pk()
 		
-		self.regpt.set_spectra_B('delta','theta',self.spectrum_lin.size,self.spectrum_lin.k,pk_dt)
-		self.regpt.set_spectra_B('theta','theta',self.spectrum_lin.size,self.spectrum_lin.k,pk_tt)
+		self.regpt.set_spectra_B('delta'.encode('utf-8'),'theta'.encode('utf-8'),self.spectrum_lin.size,self.spectrum_lin.k,pk_dt)
+		self.regpt.set_spectra_B('theta'.encode('utf-8'),'theta'.encode('utf-8'),self.spectrum_lin.size,self.spectrum_lin.k,pk_tt)
 			
 		self.regpt.run_terms_B.argtypes = (ctypes.c_size_t,)
 		self.regpt.run_terms_B(nthreads)

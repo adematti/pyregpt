@@ -498,7 +498,8 @@ test_copy()
 plot_pk_lin()
 plot_spectrum_nowiggle()
 #plot_spectrum_nowiggle_comparison()
-plot_regpt()
+#plot_regpt()
+
 """
 def debug():
 	k,_,_,pk_ref_dt,pk_ref_tt = scipy.loadtxt('ref_spectra_B.dat',unpack=True)

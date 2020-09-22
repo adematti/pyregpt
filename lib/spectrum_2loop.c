@@ -80,7 +80,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 		init_gamma2_tree();
 		init_gamma2d_1loop();
 		init_gamma2t_1loop();
-#pragma omp for nowait schedule(dynamic)
+#pragma omp for schedule(static)
 		for (ik=0;ik<terms_2loop.nk;ik++) {
 			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			histo_t k = terms_2loop.k[ik];
@@ -148,7 +148,7 @@ void run_terms_spectrum_2loop(char* a_,char* b_,size_t num_threads)
 		init_gamma2d_1loop();
 		init_gamma2t_1loop();
 		init_gamma3_tree();
-#pragma omp for nowait schedule(dynamic)
+#pragma omp for schedule(static)
 		for (ik=0;ik<terms_2loop.nk;ik++) {
 			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			histo_t k = terms_2loop.k[ik];

@@ -16,9 +16,18 @@ All tests are in tests/.
 Installation
 ------------
 
-To compile the C code:
-- make clean
-- make
+First download Cuba-4.1 (http://www.feynarts.de/cuba/) and install:\
+$ ./configure\
+Then make shared library (credits to https://github.com/JohannesBuchner/cuba):\
+$ sed 's/CFLAGS = -O3 -fomit-frame-pointer/CFLAGS = -O3 -fPIC -fomit-frame-pointer/g' --in-place makefile\
+$ make -B libcuba.a\
+$ gcc -shared -Wall $(ar xv libcuba.a |sed 's/x - //g') -lm -o libcuba.so\
+Export CUBA path:\
+$ export CUBA=$(pwd)\
+\
+To compile the C code:\
+$ make clean\
+$ make\
 
 Requirements
 ------------

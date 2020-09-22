@@ -52,7 +52,7 @@ void run_terms_A_2loop(size_t num_threads)
 #pragma omp parallel default(none) shared(terms_A,step_verbose,verbose) private(ik,pk_A)
 	{
 		init_A_2loop_I();
-#pragma omp for nowait schedule(dynamic)
+#pragma omp for schedule(static)
 		for (ik=0;ik<terms_A.nk;ik++) {
 			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation I done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
 			histo_t k = terms_A.k[ik];
@@ -103,7 +103,7 @@ void run_terms_A_2loop(size_t num_threads)
 	{
 		init_A_2loop_I();
 		init_A_2loop_II_III();
-#pragma omp for nowait schedule(dynamic)
+#pragma omp for schedule(static)
 		for (ik=0;ik<terms_A.nk;ik++) {
 			histo_t k = terms_A.k[ik];
 			if ((verbose == INFO) && (ik % step_verbose == 0)) printf(" - computation done at %zu percent\n",ik*STEP_VERBOSE/step_verbose);
