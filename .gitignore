@@ -2,3 +2,9 @@
 *.so
 *.o
 *~
+**/__pycache__
+**/*.egg
+**/*.egg-info
+**/depends/Cuba*
+**/depends/src
+**/bak/*
