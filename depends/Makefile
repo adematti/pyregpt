@@ -7,6 +7,7 @@ UNPACK=Cuba-$(CUBA_VERSION)
 
 $(TARBALL):
 	curl -fsSL http://www.feynarts.de/cuba/Cuba-$(CUBA_VERSION).tar.gz > $(TARBALL)
+	#wget -O $(TARBALL) http://www.feynarts.de/cuba/Cuba-$(CUBA_VERSION).tar.gz
 
 $(UNPACK): $(TARBALL)
 	tar -zxvf $(TARBALL)

@@ -104,7 +104,7 @@ typedef struct {
 	histo_t* B;
 } TermsB;
 
-VERBOSITY verbose;
-Pk pk_lin;
+extern VERBOSITY verbose;
+extern Pk pk_lin;
 
 #endif //_REGPT_DEFINE_
