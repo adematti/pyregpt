@@ -26,13 +26,29 @@ def find_compiler():
     compiler = os.getenv('CC', None)
     if compiler is None:
         compiler = sysconfig.get_config_vars().get('CC', None)
+    import platform
+    uname = platform.uname().system
+    if compiler is None:
+        compiler = 'gcc'
+        if uname == 'Darwin': compiler = 'clang'
     return compiler
+
+
+def compiler_is_clang(compiler):
+    if compiler == 'clang':
+        return True
+    from subprocess import Popen, PIPE
+    proc = Popen([compiler, '--version'], universal_newlines=True, stdout=PIPE, stderr=PIPE, shell=True)
+    out, err = proc.communicate()
+    if 'clang' in out:
+        return True
+    return False
 
 
 class custom_build(build):
 
     def run(self):
-        super(custom_build,self).run()
+        super(custom_build, self).run()
 
         #lib_dir = os.path.join(os.path.abspath(self.build_lib),'pyrecon','lib')
         os.environ.setdefault('LIBDIR', lib_dir)
@@ -40,7 +56,7 @@ class custom_build(build):
 
         compiler = find_compiler()
         os.environ.setdefault('CC', compiler)
-        if compiler == 'clang':
+        if compiler_is_clang(compiler):
             flags = '-Xclang -fopenmp -L{} -lomp'.format(library_dir)
         elif compiler in ['cc', 'icc']:
             flags = '-fopenmp -L{} -lgomp -limf -liomp5'.format(library_dir)
@@ -99,5 +115,4 @@ if __name__ == '__main__':
                     'develop': custom_develop,
                     'bdist_egg': custom_bdist_egg,
                     'clean': custom_clean},
-          packages=[package_basename],
-          )
+          packages=[package_basename])
